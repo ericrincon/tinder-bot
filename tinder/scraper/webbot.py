@@ -149,7 +149,8 @@ class WebBot:
 
             user_image_urls.extend(temp_user_image_urls)
 
-        print(len(user_image_urls))
+        return user_image_urls
+
 
     def get_next_image_button(self):
         return self.browser.find_elements_by_xpath("//*[contains(@class, 'pageButton')]")
