@@ -1,2 +1,2 @@
 tinder/config.py
-.pyc
+*.pyc
