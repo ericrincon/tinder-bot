@@ -1,6 +1,6 @@
 import argparse
 
-from tinder.scraper.scraper import AutoSwiper
+from tinder.scraper.webbot import AutoSwiper
 from tinder.config import Config
 
 def main():
