@@ -20,16 +20,42 @@ import urllib2
 from selenium.webdriver.common.keys import Keys
 
 
+def firefox():
+    firefox_profile = FirefoxProfile()
+    firefox_profile.set_preference("geo.enabled", True)
+    firefox_profile.set_preference("geo.provider.use_corelocation", True)
+
+    firefox_profile.set_preference("geo.prompt.testing", True)
+    firefox_profile.set_preference("geo.prompt.testing.allow", True)
+
+    return webdriver.Firefox(firefox_profile=firefox_profile)
+
+
+
+def chromium():
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--disable-notifications')
+
+    return webdriver.Chrome(chrome_options=chrome_options)
+
+
+BROWSER_PROFILES = {
+    'firefox': firefox,
+    'chromium': chromium
+}
+
+def get_browser(browser):
+    if browser in BROWSER_PROFILES:
+        return BROWSER_PROFILES[browser]()
+    else:
+        raise ValueError('Browser {} not defined!'.format(browser))
+
 class WebBot:
-    def __init__(self, email, password):
+    def __init__(self, email, password, browser='firefox'):
         self.email = email
         self.password = password
+        self.browser = get_browser(browser)
 
-        firefox_profile = FirefoxProfile()
-        firefox_profile.set_preference("geo.prompt.testing", True)
-        firefox_profile.set_preference("geo.prompt.testing.allow", True)
-
-        self.browser = webdriver.Firefox(firefox_profile=firefox_profile)
         self.browser.get('https://tinder.com/app/login')
 
     def get_bio(self):
