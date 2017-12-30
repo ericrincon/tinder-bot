@@ -15,19 +15,15 @@ from tinder.utils import files
 from selenium.common.exceptions import NoSuchElementException
 
 
-def firefox(location=None):
+def firefox():
     firefox_profile = FirefoxProfile()
     firefox_profile.set_preference("geo.prompt.testing", True)
     firefox_profile.set_preference("geo.prompt.testing.allow", True)
 
-    if location:
-        firefox_profile.set_preference("geo.wifi.uri",
-                                       'data:application/json,{"location": {"lat": %s, "lng": %s}, "accuracy": 100.0}' % (location.latitude, location.longitude))
-
     return webdriver.Firefox(firefox_profile=firefox_profile)
 
 
-def chromium(location=None):
+def chromium():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--disable-notifications')
 
@@ -40,9 +36,9 @@ BROWSER_PROFILES = {
 }
 
 
-def get_browser(browser, location=None, *args, **kwargs):
+def get_browser(browser, *args, **kwargs):
     if browser in BROWSER_PROFILES:
-        return BROWSER_PROFILES[browser](*args, location=location, **kwargs)
+        return BROWSER_PROFILES[browser](*arg, **kwargs)
     else:
         raise ValueError('Browser {} not defined!'.format(browser))
 
@@ -57,10 +53,10 @@ def download_image(url, file_name):
 
 
 class WebBot:
-    def __init__(self, email, password, location=None, browser='firefox'):
+    def __init__(self, email, password, browser='firefox'):
         self.email = email
         self.password = password
-        self.browser = get_browser(browser, location=location)
+        self.browser = get_browser(browser)
 
         self.browser.get('https://tinder.com/app/login')
 
