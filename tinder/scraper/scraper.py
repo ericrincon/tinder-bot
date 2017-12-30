@@ -12,3 +12,4 @@ class ScraperBot:
         users = self.session.nearby_users()
 
         for user in users:
+

@@ -1,23 +1,18 @@
 import re
 import time
-from selenium.webdriver.support.ui import WebDriverWait
+import urllib.request
+import os
+
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as e
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support import expected_conditions as EC
 
+from selenium.webdriver.common.keys import Keys
+
+from tinder.database.models import TinderUser, Image
+from tinder.database import Session
+
+from tinder.utils import files
 from selenium.common.exceptions import NoSuchElementException
-
-import os
-import urllib
-import urllib2
-
-
-from selenium.webdriver.common.keys import Keys
 
 
 def firefox():
@@ -29,7 +24,6 @@ def firefox():
     firefox_profile.set_preference("geo.prompt.testing.allow", True)
 
     return webdriver.Firefox(firefox_profile=firefox_profile)
-
 
 
 def chromium():
@@ -44,11 +38,22 @@ BROWSER_PROFILES = {
     'chromium': chromium
 }
 
+
 def get_browser(browser):
     if browser in BROWSER_PROFILES:
         return BROWSER_PROFILES[browser]()
     else:
         raise ValueError('Browser {} not defined!'.format(browser))
+
+
+def download_images(images):
+    for image in images:
+        download_image(image.url, image.file_path)
+
+
+def download_image(url, file_name):
+    urllib.request.urlretrieve(url=url, filename=file_name)
+
 
 class WebBot:
     def __init__(self, email, password, browser='firefox'):
@@ -117,47 +122,104 @@ class WebBot:
         Finds the element for the name and age in the profile and returns the name as a string and the age
         as an int
         :return:
+
         """
-        name_age = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__nameAge')]").text
+        name, age = '', None
 
-        if name_age is None:
-            return None, None
-        name, age = name_age.split()
+        try:
 
-        name = name.strip()
-        age = int(age.strip())
+            name_age = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__nameAge')]").text
+
+            if name_age:
+                split_name_age = name_age.split()
+
+                if split_name_age and len(split_name_age) == 2:
+                    name, age = split_name_age
+
+                    name = name.replace(',', '').strip()
+                    age = int(age.replace(',', '').strip())
+        except NoSuchElementException as e:
+            print(e)
+            print('Could not find name age element!')
 
         return name, age
 
     def get_image_url(self):
-        return self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__slider__img StretchedBox')]").get_attribute('src')
+        return self.browser.find_element_by_xpath(
+            "//*[contains(@class, 'profileCard__slider__img StretchedBox')]").get_attribute('src')
 
     def get_all_image_urls(self):
-        time.sleep(1)
-        picture_elements =  self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__slider')]")
+        """
+        Find the top level stack element and then send the space key to iterate though user photos
+        and at each iteration look for the newly loaded image if the image url already exists in the
+        list then filter it out
 
-        # picture_elements = self.browser.find_element_by_class_name('react-swipeable-view-container')
+        :return: image urls list if image urls are found if a element was not found exception
+        """
+        time.sleep(1)
+
+        try:
+            picture_elements = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__slider')]")
+        except NoSuchElementException as e:
+            print(e)
+            print('profileCard__slider element was not found')
+
+            return []
+
         user_image_urls = []
 
-        for _ in range(6):
-            time.sleep(1)
-            # find a better way but this works for now...
-            picture_elements.send_keys(Keys.SPACE)
-            image_elements = picture_elements.find_elements_by_tag_name('img')
-            temp_user_image_urls = list(map(lambda element: element.get_attribute('src'), image_elements))
-            temp_user_image_urls = filter(lambda url: url not in user_image_urls, temp_user_image_urls)
+        # If there is a no such element exception at an iteration of the for loop catch and return what
+        # we have so far..
+        try:
 
-            user_image_urls.extend(temp_user_image_urls)
+            for _ in range(6):
+                # Sleep for 1 second or image url will not load
+                time.sleep(1)
+
+                # find a better way but this works for now...
+                picture_elements.send_keys(Keys.SPACE)
+                image_elements = picture_elements.find_elements_by_tag_name('img')
+                temp_user_image_urls = list(map(lambda element: element.get_attribute('src'), image_elements))
+                temp_user_image_urls = filter(lambda url: url not in user_image_urls, temp_user_image_urls)
+
+                user_image_urls.extend(temp_user_image_urls)
+        except NoSuchElementException as e:
+            print(e)
+            print('An image url could not be found!')
 
         return user_image_urls
-
 
     def get_next_image_button(self):
         return self.browser.find_elements_by_xpath("//*[contains(@class, 'pageButton')]")
 
-class AutoSwiper(WebBot):
-    def start(self):
 
+def create_images(image_urls, images_file_path, tinder_user_name):
+    images = []
+
+    for i, image_url in enumerate(image_urls):
+        image_number = i + 1
+        file_path = get_tinder_user_image_filepath(images_file_path, tinder_user_name, image_number)
+        image = Image(url=image_url, file_path=file_path, image_number=image_number)
+        images.append(image)
+
+    return images
+
+def get_tinder_user_image_filepath(images_file_path, tinder_user_name, number):
+    return '{}/{}/{}_{}.jpg'.format(images_file_path, tinder_user_name, tinder_user_name, number)
+
+
+def get_tinder_user_image_dir(images_file_path, tinder_user_name):
+    return '{}/{}'.format(images_file_path, tinder_user_name)
+
+
+class AutoSwiper(WebBot):
+    def __init__(self, *args, **kwargs):
+        super(AutoSwiper, self).__init__(*args, **kwargs)
+        self.images_file_path = '/Users/ericrincon/tinder_data/images'
+
+        files.make_check_dir(self.images_file_path)
+
+    def start(self):
         self.login_facebook()
 
         time.sleep(5)
@@ -179,8 +241,6 @@ class AutoSwiper(WebBot):
 
         bio_checker = BioCheck()
 
-
-
         while True:
             time.sleep(2)
             bio_text = self.get_bio()
@@ -188,15 +248,43 @@ class AutoSwiper(WebBot):
             if bio_text is None:
                 bio_text = 'No bio!'
             name, age = self.get_name_age()
+            image_urls = self.get_all_image_urls()
 
-            self.get_all_image_urls()
-            print(bio_text + '\n')
+            session = Session()
+            image_name = name
+
+            check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
+
+            while check:
+                if '_' in name:
+                    image_name, number = name.split()
+                    number = int(number) + 1
+                else:
+                    number = 0
+                image_name = '{}_{}'.format(image_name, number)
+
+                check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
+
+            images = create_images(image_urls, self.images_file_path, image_name)
+
+            user = TinderUser(name=name, age=age, bio=bio_text,
+                              images=images)
+            download_images(images)
+
+            session.add(user)
+            session.commit()
+            session.close()
 
             if not bio_checker.check(bio_text):
                 print('Shes not into hookups!')
                 self.swipe_left()
             else:
                 self.swipe_right()
+
+    def save_images(self, image_urls):
+        for image_url in image_urls:
+            file_name = ''
+            download_image(image_url, file_name)
 
 
 class BioCheck:
@@ -209,6 +297,3 @@ class BioCheck:
             if exp.match(bio):
                 return False
         return True
-
-
-

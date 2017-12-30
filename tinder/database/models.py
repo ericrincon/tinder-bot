@@ -6,31 +6,38 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
 
 
-
-
-class TinderBot(base):
-    pass
-
-
 class TinderUser(base):
     __tablename__ = 'tinder_user'
 
-    id = Column(TEXT)
+    id = Column(TEXT, primary_key=True)
 
     name = Column(TEXT)
-    age = Column()
+    age = Column(INTEGER)
     bio = Column(TEXT)
     images = relationship('Image')
-    birth_date = Column()
-    instagram_username = Column()
-    instagram_photos = Column()
-    schools = Column()
-    jobs = Column()
-
+    birth_date = Column(TEXT, nullable=True)
+    instagram_username = Column(TEXT, nullable=True)
+    instagram_photos = Column(TEXT, nullable=True)
+    schools = Column(TEXT, nullable=True)
+    jobs = Column(TEXT, nullable=True)
 
     def __init__(self, name='', age=None, bio='', images=None, birth_date='',
                  instagram_username='', instagram_photos=None,
                  schools=None, jobs=None):
+        """
+
+        :param name:
+        :param age:
+        :param bio:
+        :param images:
+        :param birth_date:
+        :param instagram_username:
+        :param instagram_photos:
+        :param schools:
+        :param jobs:
+        """
+        if images is None:
+            images = []
 
         self.id = str(uuid.uuid4())
         self.name = name
@@ -50,7 +57,7 @@ class Image(base):
     """
     __tablename__ = 'image'
 
-    id = Column(TEXT)
+    id = Column(TEXT, primary_key=True)
     url = Column(TEXT)
     file_path = Column(TEXT)
     user_id = Column(TEXT, ForeignKey('tinder_user.id'))
