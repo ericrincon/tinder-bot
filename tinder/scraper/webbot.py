@@ -15,7 +15,7 @@ from tinder.utils import files
 from selenium.common.exceptions import NoSuchElementException
 
 
-def firefox():
+def firefox(location=None):
     firefox_profile = FirefoxProfile()
     firefox_profile.set_preference("geo.enabled", True)
     firefox_profile.set_preference("geo.provider.use_corelocation", True)
@@ -23,10 +23,14 @@ def firefox():
     firefox_profile.set_preference("geo.prompt.testing", True)
     firefox_profile.set_preference("geo.prompt.testing.allow", True)
 
+    if location:
+        firefox_profile.set_preference("geo.wifi.uri",
+                                       'data:application/json,{"location": {"lat": %s, "lng": %s}, "accuracy": 100.0}' % (location.latitude, location.longitude))
+
     return webdriver.Firefox(firefox_profile=firefox_profile)
 
 
-def chromium():
+def chromium(location=None):
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--disable-notifications')
 
@@ -39,9 +43,9 @@ BROWSER_PROFILES = {
 }
 
 
-def get_browser(browser):
+def get_browser(browser, location=None, *args, **kwargs):
     if browser in BROWSER_PROFILES:
-        return BROWSER_PROFILES[browser]()
+        return BROWSER_PROFILES[browser](*args, location=location, **kwargs)
     else:
         raise ValueError('Browser {} not defined!'.format(browser))
 
@@ -56,10 +60,10 @@ def download_image(url, file_name):
 
 
 class WebBot:
-    def __init__(self, email, password, browser='firefox'):
+    def __init__(self, email, password, location=None, browser='firefox'):
         self.email = email
         self.password = password
-        self.browser = get_browser(browser)
+        self.browser = get_browser(browser, location=location)
 
         self.browser.get('https://tinder.com/app/login')
 
@@ -203,6 +207,7 @@ def create_images(image_urls, images_file_path, tinder_user_name):
         images.append(image)
 
     return images
+
 
 def get_tinder_user_image_filepath(images_file_path, tinder_user_name, number):
     return '{}/{}/{}_{}.jpg'.format(images_file_path, tinder_user_name, tinder_user_name, number)
