@@ -17,9 +17,6 @@ from selenium.common.exceptions import NoSuchElementException
 
 def firefox(location=None):
     firefox_profile = FirefoxProfile()
-    firefox_profile.set_preference("geo.enabled", True)
-    firefox_profile.set_preference("geo.provider.use_corelocation", True)
-
     firefox_profile.set_preference("geo.prompt.testing", True)
     firefox_profile.set_preference("geo.prompt.testing.allow", True)
 
@@ -261,8 +258,8 @@ class AutoSwiper(WebBot):
             check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
             while check:
-                if '_' in name:
-                    image_name, number = name.split()
+                if '_' in image_name:
+                    image_name, number = image_name.split('_')
                     number = int(number) + 1
                 else:
                     number = 0
