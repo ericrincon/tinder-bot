@@ -12,10 +12,10 @@ from tinder.database.models import TinderUser, Image
 from tinder.database import Session
 
 from tinder.utils import files
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
 
-def firefox():
+def firefox(*args, **kwargs):
     firefox_profile = FirefoxProfile()
     firefox_profile.set_preference("geo.prompt.testing", True)
     firefox_profile.set_preference("geo.prompt.testing.allow", True)
@@ -23,7 +23,7 @@ def firefox():
     return webdriver.Firefox(firefox_profile=firefox_profile)
 
 
-def chromium():
+def chromium(*args, **kwargs):
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--disable-notifications')
 
@@ -38,7 +38,7 @@ BROWSER_PROFILES = {
 
 def get_browser(browser, *args, **kwargs):
     if browser in BROWSER_PROFILES:
-        return BROWSER_PROFILES[browser](*arg, **kwargs)
+        return BROWSER_PROFILES[browser](*args, **kwargs)
     else:
         raise ValueError('Browser {} not defined!'.format(browser))
 
@@ -121,7 +121,7 @@ class WebBot:
         :return:
 
         """
-        name, age = '', None
+        name, age = None, None
 
         try:
 
@@ -240,44 +240,60 @@ class AutoSwiper(WebBot):
         bio_checker = BioCheck()
 
         while True:
-            time.sleep(2)
-            bio_text = self.get_bio()
+            try:
+                time.sleep(2)
 
-            if bio_text is None:
-                bio_text = 'No bio!'
-            name, age = self.get_name_age()
-            image_urls = self.get_all_image_urls()
+                bio_text = self.get_bio()
 
-            session = Session()
-            image_name = name
+                if bio_text is None:
+                    bio_text = 'No bio!'
+                name, age = self.get_name_age()
+                image_urls = self.get_all_image_urls()
 
-            check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
-
-            while check:
-                if '_' in image_name:
-                    image_name, number = image_name.split('_')
-                    number = int(number) + 1
-                else:
-                    number = 0
-                image_name = '{}_{}'.format(image_name, number)
+                session = Session()
+                image_name = name
 
                 check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-            images = create_images(image_urls, self.images_file_path, image_name)
+                while check:
+                    if '_' in image_name:
+                        image_name, number = image_name.split('_')
+                        number = int(number) + 1
+                    else:
+                        number = 0
+                    image_name = '{}_{}'.format(image_name, number)
 
-            user = TinderUser(name=name, age=age, bio=bio_text,
-                              images=images)
-            download_images(images)
+                    check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-            session.add(user)
-            session.commit()
-            session.close()
+                images = create_images(image_urls, self.images_file_path, image_name)
 
-            if not bio_checker.check(bio_text):
-                print('Shes not into hookups!')
-                self.swipe_left()
-            else:
-                self.swipe_right()
+                if name is None and age is None and bio_text is None:
+                    print('Elements are gone restarting...')
+                    self.browser.close()
+
+                    return
+
+                user = TinderUser(name=name, age=age, bio=bio_text,
+                                  images=images)
+                download_images(images)
+
+                session.add(user)
+                session.commit()
+                session.close()
+
+                if not bio_checker.check(bio_text):
+                    print('Shes not into hookups!')
+                    self.swipe_left()
+                else:
+                    self.swipe_right()
+            except StaleElementReferenceException as e:
+                print(e)
+                print('Elements are gone restarting...')
+                self.browser.close()
+
+                return
+
+
 
     def save_images(self, image_urls):
         for image_url in image_urls:
