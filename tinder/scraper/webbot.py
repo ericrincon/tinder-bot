@@ -64,8 +64,10 @@ class WebBot:
         try:
             elem = self.browser.find_element_by_css_selector('body')
             elem.send_keys(Keys.ARROW_UP)
-            profile_card = self.browser.find_element_by_xpath(
-                '//div[@class="Py(10px) Px(16px) profileCard__bio Ta(start) Us(t) C($c-secondary) BreakWord Whs(pl)"]')
+            # profile_card = self.browser.find_element_by_xpath(
+            #     '//div[@class="Py(10px) Px(16px) profileCard__bio Ta(start) Us(t) C($c-secondary) BreakWord Whs(pl)"]')
+            profile_card = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
+
             profile_text = profile_card.find_element_by_class_name('text')
 
             return profile_text.text
@@ -105,6 +107,18 @@ class WebBot:
 
         self.browser.switch_to_window(self.browser.window_handles[0])
 
+
+    def get_share_button(self):
+        """
+        Locates the allow sharing button option at the start of the tinder user
+        login flow
+        :return:
+        """
+
+        share_button = self.browser.find_element_by_xpath('//*[@aria-label="Share"]')
+
+        return share_button
+
     def get_name(self):
         name = self.browser.find_element_by_xpath(
             '//div[@class="profileCard__nameAge Lts($ls-s) C($c-base) Us(t) Fw($medium) Fz($ml)"]').text
@@ -125,7 +139,10 @@ class WebBot:
 
         try:
 
-            name_age = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__nameAge')]").text
+            profilecard_header_info = self.browser.find_element_by_xpath(
+                "//*[contains(@class, 'profileCard__header__info')]")
+            name_age = profilecard_header_info.find_element_by_xpath(
+                "//*[contains(@class, 'My(2px)')]").text
 
             if name_age:
                 split_name_age = name_age.split()
@@ -138,6 +155,8 @@ class WebBot:
         except NoSuchElementException as e:
             print(e)
             print('Could not find name age element!')
+
+            return None, None
 
         return name, age
 
@@ -184,6 +203,8 @@ class WebBot:
             print(e)
             print('An image url could not be found!')
 
+            return None
+
         return user_image_urls
 
     def get_next_image_button(self):
@@ -226,13 +247,19 @@ class AutoSwiper(WebBot):
             '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
         next_button.click()
 
+        # Enhanced messaging prompt
         next_button = self.browser.find_element_by_xpath(
             '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
         next_button.click()
 
-        great_button = self.browser.find_element_by_xpath(
-            '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
-        great_button.click()
+        # Find the share button and click it
+        time.sleep(3)
+        share_button = self.get_share_button()
+        share_button.click()
+
+        # great_button = self.browser.find_element_by_xpath(
+        #     '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
+        # great_button.click()
         time.sleep(10)
         not_interested_button = self.browser.find_element_by_xpath('//button[@aria-label="Not interested"]')
         not_interested_button.click()
@@ -255,8 +282,17 @@ class AutoSwiper(WebBot):
 
                 check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
+                print('name: {}'.format(name is not None), 'age: {}'.format(age is not None),
+                      'bio: {}'.format(bio_text is not  None))
+
+                if name is None and age is None and bio_text is None:
+                    print('Elements are gone restarting...')
+                    self.browser.close()
+
+                    return
+
                 while check:
-                    if '_' in image_name:
+                    if image_name and '_' in image_name:
                         image_name, number = image_name.split('_')
                         number = int(number) + 1
                     else:
@@ -267,11 +303,7 @@ class AutoSwiper(WebBot):
 
                 images = create_images(image_urls, self.images_file_path, image_name)
 
-                if name is None and age is None and bio_text is None:
-                    print('Elements are gone restarting...')
-                    self.browser.close()
 
-                    return
 
                 user = TinderUser(name=name, age=age, bio=bio_text,
                                   images=images)
@@ -280,6 +312,8 @@ class AutoSwiper(WebBot):
                 session.add(user)
                 session.commit()
                 session.close()
+
+                print('Added {} of age {} with {} images\n'.format(name, age, len(images)))
 
                 if not bio_checker.check(bio_text):
                     print('Shes not into hookups!')
