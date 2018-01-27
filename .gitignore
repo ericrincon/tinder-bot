@@ -1,2 +1,8 @@
 tinder/config.py
 *.pyc
+.idea/
+.ipynb_checkpoints/
+*.csv
+*.txt
+pynder/
+*.log
