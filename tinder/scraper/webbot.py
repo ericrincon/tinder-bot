@@ -2,6 +2,7 @@ import re
 import time
 import urllib.request
 import os
+import sys
 
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
@@ -64,8 +65,6 @@ class WebBot:
         try:
             elem = self.browser.find_element_by_css_selector('body')
             elem.send_keys(Keys.ARROW_UP)
-            # profile_card = self.browser.find_element_by_xpath(
-            #     '//div[@class="Py(10px) Px(16px) profileCard__bio Ta(start) Us(t) C($c-secondary) BreakWord Whs(pl)"]')
             profile_card = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
 
             profile_text = profile_card.find_element_by_class_name('text')
@@ -107,7 +106,6 @@ class WebBot:
 
         self.browser.switch_to_window(self.browser.window_handles[0])
 
-
     def get_share_button(self):
         """
         Locates the allow sharing button option at the start of the tinder user
@@ -115,7 +113,7 @@ class WebBot:
         :return:
         """
 
-        share_button = self.browser.find_element_by_xpath('//*[@aria-label="Share"]')
+        share_button = self.browser.find_element_by_xpath('//*[@aria-label="Great!"]')
 
         return share_button
 
@@ -164,7 +162,55 @@ class WebBot:
         return self.browser.find_element_by_xpath(
             "//*[contains(@class, 'profileCard__slider__img StretchedBox')]").get_attribute('src')
 
+    def get_profile_expand(self):
+
+        return self.browser.find_element_by_xpath("//*[contains(@class, 'recCard__openProfile')]")
+
+    def get_profile_card_element(self):
+        return self.browser.find_element_by_xpath("//*[contains(@class, 'recsCardboard')]")
+
+    def get_image_slider_element(self):
+        return self.browser.find_element_by_xpath("//img[@alt='Profile slider']")
+
+
     def get_all_image_urls(self):
+        """
+        Find the top level stack element and then send the space key to iterate though user photos
+        and at each iteration look for the newly loaded image if the image url already exists in the
+        list then filter it out
+
+        :return: image urls list if image urls are found if a element was not found exception
+        """
+        time.sleep(1)
+
+        user_image_urls = []
+
+        # If there is a no such element exception at an iteration of the for loop catch and return what
+        # we have so far..
+        try:
+
+            for _ in range(6):
+                # Sleep for 1 second or image url will not load
+                time.sleep(2)
+                image_element = self.get_image_slider_element()
+                image_url = image_element.get_attribute('src')
+                # find a better way but this works for now...
+                elem = self.browser.find_element_by_css_selector('body')
+                elem.send_keys(Keys.SPACE)
+
+                if image_url not in user_image_urls:
+                    user_image_urls.append(image_url)
+
+
+        except NoSuchElementException as e:
+            print(e)
+            print('An image url could not be found!')
+
+            return None
+
+        return user_image_urls
+
+    def _get_all_image_urls(self):
         """
         Find the top level stack element and then send the space key to iterate though user photos
         and at each iteration look for the newly loaded image if the image url already exists in the
@@ -193,12 +239,13 @@ class WebBot:
                 time.sleep(1)
 
                 # find a better way but this works for now...
-                picture_elements.send_keys(Keys.SPACE)
+                self.get_profile_card_element().send_keys(Keys.SPACE)
                 image_elements = picture_elements.find_elements_by_tag_name('img')
                 temp_user_image_urls = list(map(lambda element: element.get_attribute('src'), image_elements))
                 temp_user_image_urls = filter(lambda url: url not in user_image_urls, temp_user_image_urls)
 
                 user_image_urls.extend(temp_user_image_urls)
+            print(user_image_urls)
         except NoSuchElementException as e:
             print(e)
             print('An image url could not be found!')
@@ -261,12 +308,16 @@ class AutoSwiper(WebBot):
         #     '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
         # great_button.click()
         time.sleep(10)
-        not_interested_button = self.browser.find_element_by_xpath('//button[@aria-label="Not interested"]')
+        not_interested_button = self.browser.find_element_by_xpath(
+            '//button[@aria-label="NotificationsScreen - Deny notification"]')
         not_interested_button.click()
 
         bio_checker = BioCheck()
+        profiles_scraped = 0
 
         while True:
+            console_info = ''
+
             try:
                 time.sleep(2)
 
@@ -282,11 +333,14 @@ class AutoSwiper(WebBot):
 
                 check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-                print('name: {}'.format(name is not None), 'age: {}'.format(age is not None),
-                      'bio: {}'.format(bio_text is not  None))
-
+                # print('name: {} age: {} bio: {}\r'.format(name is not None, age is not None, bio_text is not  None))
+                bio_info = 'name: {} age: {} bio: {}\n'.format(name is not None, age is not None,
+                                                               bio_text is not None)
+                console_info += bio_info
                 if name is None and age is None and bio_text is None:
-                    print('Elements are gone restarting...')
+                    sys.stdout.write('Error: Elements are gone restarting...')
+                    sys.stdout.flush()
+
                     self.browser.close()
 
                     return
@@ -301,8 +355,15 @@ class AutoSwiper(WebBot):
 
                     check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-                images = create_images(image_urls, self.images_file_path, image_name)
+                if image_urls is not None:
+                    images = create_images(image_urls, self.images_file_path, image_name)
+                else:
+                    sys.stdout.write('Error: Elements are gone restarting...')
+                    sys.stdout.flush()
 
+                    self.browser.close()
+
+                    return
 
 
                 user = TinderUser(name=name, age=age, bio=bio_text,
@@ -312,8 +373,20 @@ class AutoSwiper(WebBot):
                 session.add(user)
                 session.commit()
                 session.close()
+                profiles_scraped += 1
+                profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
+                console_info += profile_add_info
 
-                print('Added {} of age {} with {} images\n'.format(name, age, len(images)))
+                # print('Added {} of age {} with {} images\r'.format(name, age, len(images)))
+                nb_scarped_text = '\n{} profiles scraped'.format(profiles_scraped)
+
+                # print('{} profiles scraped'.format(profiles_scraped))
+
+
+
+                console_info += nb_scarped_text
+
+                sys.stdout.write(console_info)
 
                 if not bio_checker.check(bio_text):
                     print('Shes not into hookups!')
@@ -326,8 +399,6 @@ class AutoSwiper(WebBot):
                 self.browser.close()
 
                 return
-
-
 
     def save_images(self, image_urls):
         for image_url in image_urls:
