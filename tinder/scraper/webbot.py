@@ -172,7 +172,6 @@ class WebBot:
     def get_image_slider_element(self):
         return self.browser.find_element_by_xpath("//img[@alt='Profile slider']")
 
-
     def get_all_image_urls(self):
         """
         Find the top level stack element and then send the space key to iterate though user photos
@@ -257,6 +256,13 @@ class WebBot:
     def get_next_image_button(self):
         return self.browser.find_elements_by_xpath("//*[contains(@class, 'pageButton')]")
 
+    def get_next_button_element(self):
+        return self.browser.find_element_by_xpath("//button[@aria-label='Next']")
+
+    def get_enable_notifications_not_interested(self):
+        return self.browser.find_element_by_xpath("//button[@aria-label='Not interested']")
+
+
 
 def create_images(image_urls, images_file_path, tinder_user_name):
     images = []
@@ -290,13 +296,11 @@ class AutoSwiper(WebBot):
 
         time.sleep(5)
 
-        next_button = self.browser.find_element_by_xpath(
-            '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
+        next_button = self.get_next_button_element()
         next_button.click()
 
         # Enhanced messaging prompt
-        next_button = self.browser.find_element_by_xpath(
-            '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
+        next_button = self.get_next_button_element()
         next_button.click()
 
         # Find the share button and click it
@@ -308,8 +312,7 @@ class AutoSwiper(WebBot):
         #     '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
         # great_button.click()
         time.sleep(10)
-        not_interested_button = self.browser.find_element_by_xpath(
-            '//button[@aria-label="NotificationsScreen - Deny notification"]')
+        not_interested_button = self.get_enable_notifications_not_interested()
         not_interested_button.click()
 
         bio_checker = BioCheck()
@@ -364,7 +367,6 @@ class AutoSwiper(WebBot):
                     self.browser.close()
 
                     return
-
 
                 user = TinderUser(name=name, age=age, bio=bio_text,
                                   images=images)
