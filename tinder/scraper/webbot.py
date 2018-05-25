@@ -65,9 +65,10 @@ class WebBot:
         try:
             elem = self.browser.find_element_by_css_selector('body')
             elem.send_keys(Keys.ARROW_UP)
+            time.sleep(2)
             profile_card = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
 
-            profile_text = profile_card.find_element_by_class_name('text')
+            profile_text = profile_card.find_element_by_css_selector('span')
 
             return profile_text.text
         except Exception as e:
@@ -158,58 +159,43 @@ class WebBot:
 
         return name, age
 
-    def get_image_url(self):
-        return self.browser.find_element_by_xpath(
-            "//*[contains(@class, 'profileCard__slider__img StretchedBox')]").get_attribute('src')
-
     def get_profile_expand(self):
 
         return self.browser.find_element_by_xpath("//*[contains(@class, 'recCard__openProfile')]")
 
     def get_profile_card_element(self):
-        return self.browser.find_element_by_xpath("//*[contains(@class, 'recsCardboard')]")
+        return self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard')]")
 
     def get_image_slider_element(self):
-        return self.browser.find_element_by_xpath("//img[@alt='Profile slider']")
+        """
+        Gets the element where the image is located
+
+        Note: this changes.. Last time the imge was located in an attrivute
+        :return:
+        """
+        return self.browser.find_element_by_xpath("//*[contains(@class, 'react-swipeable-view-container')")
+
+
+    def get_image_url(self, element):
+        """
+
+        :param element:
+        :return:
+        """
+        style = element.get_attribute("style")
+
+        if style != "":
+
+            url = style.split()[-1][5:]
+            url = url[:len(url) - 3]
+
+        else:
+            url = ""
+
+        return url
+
 
     def get_all_image_urls(self):
-        """
-        Find the top level stack element and then send the space key to iterate though user photos
-        and at each iteration look for the newly loaded image if the image url already exists in the
-        list then filter it out
-
-        :return: image urls list if image urls are found if a element was not found exception
-        """
-        time.sleep(1)
-
-        user_image_urls = []
-
-        # If there is a no such element exception at an iteration of the for loop catch and return what
-        # we have so far..
-        try:
-
-            for _ in range(6):
-                # Sleep for 1 second or image url will not load
-                time.sleep(2)
-                image_element = self.get_image_slider_element()
-                image_url = image_element.get_attribute('src')
-                # find a better way but this works for now...
-                elem = self.browser.find_element_by_css_selector('body')
-                elem.send_keys(Keys.SPACE)
-
-                if image_url not in user_image_urls:
-                    user_image_urls.append(image_url)
-
-
-        except NoSuchElementException as e:
-            print(e)
-            print('An image url could not be found!')
-
-            return None
-
-        return user_image_urls
-
-    def _get_all_image_urls(self):
         """
         Find the top level stack element and then send the space key to iterate though user photos
         and at each iteration look for the newly loaded image if the image url already exists in the
@@ -235,21 +221,27 @@ class WebBot:
 
             for _ in range(6):
                 # Sleep for 1 second or image url will not load
-                time.sleep(1)
+                time.sleep(2)
 
                 # find a better way but this works for now...
-                self.get_profile_card_element().send_keys(Keys.SPACE)
-                image_elements = picture_elements.find_elements_by_tag_name('img')
-                temp_user_image_urls = list(map(lambda element: element.get_attribute('src'), image_elements))
-                temp_user_image_urls = filter(lambda url: url not in user_image_urls, temp_user_image_urls)
+                picture_elements.send_keys(Keys.SPACE)
 
-                user_image_urls.extend(temp_user_image_urls)
+                image_elements = picture_elements.find_elements_by_xpath(
+                    "//*[contains(@class, 'profileCard__slider__img')]")
+
+                image_urls = list(map(lambda element: self.get_image_url(element), image_elements))
+                image_urls = list(filter(lambda url: url != "", image_urls))
+                image_urls = list(filter(lambda url: url not in user_image_urls, image_urls))
+
+
+                user_image_urls.extend(image_urls)
             print(user_image_urls)
         except NoSuchElementException as e:
             print(e)
             print('An image url could not be found!')
 
             return None
+        sys.exit()
 
         return user_image_urls
 

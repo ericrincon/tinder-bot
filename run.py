@@ -5,7 +5,7 @@ from tinder.config import Config
 
 from geopy.geocoders import Nominatim
 
-def get_locatino(location_query):
+def get_location(location_query):
     geolocator = Nominatim()
 
     return geolocator.geocode(location_query)
