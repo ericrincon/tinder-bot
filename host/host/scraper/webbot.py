@@ -234,13 +234,12 @@ class WebBot:
 
 
                 user_image_urls.extend(image_urls)
-            print(user_image_urls)
+
         except NoSuchElementException as e:
             print(e)
             print('An image url could not be found!')
 
             return None
-        sys.exit()
 
         return user_image_urls
 
@@ -299,9 +298,6 @@ class AutoSwiper(WebBot):
         share_button = self.get_share_button()
         share_button.click()
 
-        # great_button = self.browser.find_element_by_xpath(
-        #     '//button[@class="button Lts($ls-s) Z(0) Whs(nw) Cur(p) Tt(u) Bdrs(100px) Px(24px) Py(0) H(40px) Mih(40px) Lh(40px) button--primary-shadow Pos(r) Ov(h) C(#fff) Bg($c-pink):h::b Trsdu($fast) Trsp($background) Bg($primary-gradient) StyledButton Fw($semibold)"]')
-        # great_button.click()
         time.sleep(10)
         not_interested_button = self.get_enable_notifications_not_interested()
         not_interested_button.click()
@@ -370,10 +366,8 @@ class AutoSwiper(WebBot):
                 profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
                 console_info += profile_add_info
 
-                # print('Added {} of age {} with {} images\r'.format(name, age, len(images)))
                 nb_scarped_text = '\n{} profiles scraped'.format(profiles_scraped)
 
-                # print('{} profiles scraped'.format(profiles_scraped))
 
 
 
