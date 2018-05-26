@@ -13,10 +13,11 @@ def get_location(location_query):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--browser", default="firefox")
     args = parser.parse_args()
 
     while True:
-        auto_swiper = AutoSwiper(Config.email, Config.password)
+        auto_swiper = AutoSwiper(Config.email, Config.password, browser=args.browser)
         auto_swiper.start()
 
 
