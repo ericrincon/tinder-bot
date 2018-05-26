@@ -1,7 +1,6 @@
 import uuid
 
-from swiper.
-from tinder.database import base
+from database.db import base
 
 from sqlalchemy.dialects.postgresql import TEXT, INTEGER
 from sqlalchemy import Column, ForeignKey
@@ -64,6 +63,8 @@ class Image(base):
     file_path = Column(TEXT)
     user_id = Column(TEXT, ForeignKey('tinder_user.id'))
     image_number = Column(INTEGER)
+    labeled_image = relationship("LabeledImage", back_populates="image")
+    labeled_image_id = Column(TEXT, ForeignKey('labeled_image.id'))
 
     def __init__(self, url, file_path, image_number):
         self.id = str(uuid.uuid4())

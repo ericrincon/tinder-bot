@@ -1,7 +1,6 @@
 import re
 import time
 import urllib.request
-import os
 import sys
 
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
@@ -9,10 +8,10 @@ from selenium import webdriver
 
 from selenium.webdriver.common.keys import Keys
 
-from tinder.database.models import TinderUser, Image
-from tinder.database import Session
+from database.db.models.user import TinderUser, Image
+from database.db import Session
 
-from tinder.utils import files
+from host.host.utils import files
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
 
@@ -109,7 +108,7 @@ class WebBot:
 
     def get_share_button(self):
         """
-        Locates the allow sharing button option at the start of the tinder user
+        Locates the allow sharing button option at the start of the host user
         login flow
         :return:
         """

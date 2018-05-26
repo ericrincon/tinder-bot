@@ -1,8 +1,3 @@
-import pynder
-
-from tinder.config import Config
-
-
 # class ScraperBot:
 #
 #     def __init__(self, facebook_id, facebook_auth_token):
