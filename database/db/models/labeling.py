@@ -2,22 +2,28 @@ import uuid
 
 import datetime
 
-from swiper.swiper_backend.database import base
+from database.db import Base
 
 from sqlalchemy.dialects.postgresql import TEXT, INTEGER
 from sqlalchemy import Column, ForeignKey, DateTime, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ARRAY
 
-
-
-label_association_table = Table('label_association', base.metadata,
-    Column('labeling_session', TEXT, ForeignKey('labeling_session.id')),
-    Column('labeled_image', TEXT, ForeignKey('label.id'))
+label_association_table = Table(
+    'label_association', Base.metadata,
+    Column('labeling_session_id', TEXT, ForeignKey('labeling_session.id')),
+    Column('label_id', TEXT, ForeignKey('label.id'))
 )
 
 
-class LabelingSession(base):
+# labeled_images_table = Table(
+#     "labeled_image_association", Base.metadata,
+#     Column('labeled_image_id', TEXT, ForeignKey("labeled_image.id")),
+#     Column('image_id', TEXT, ForeignKey("image.id"))
+# )
+
+
+class LabelingSession(Base):
     """
     SQLAlcehmy table for sessions
 
@@ -36,12 +42,13 @@ class LabelingSession(base):
         self.name = name
 
 
-class LabeledImage(base):
+class LabeledImage(Base):
     __tablename__ = "labeled_image"
 
     id = Column(TEXT, primary_key=True)
     label = Column(INTEGER)
-    image = relationship("Image", uselist=False, back_populates="LabeledImage")
+    image_id = Column(TEXT, ForeignKey('image.id'))
+    image = relationship("Image")
 
     def __init__(self, label, image):
         """
@@ -55,15 +62,12 @@ class LabeledImage(base):
         self.image = image
 
 
-
-
-class Label(base):
+class Label(Base):
     __tablename__ = "label"
 
     id = Column(TEXT, primary_key=True)
     label_names = Column(ARRAY(TEXT))
-    sessions = relationship("labeling_session", secondary=label_association_table,
-                             back_populates="label")
+    sessions = relationship("LabelingSession", secondary=label_association_table, back_populates="label")
 
     def __init__(self, label_names, sessions):
         self.id = str(uuid.uuid4())

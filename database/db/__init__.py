@@ -13,7 +13,7 @@ def db_connect():
     return create_engine(Config.DATABASE_URL)
 
 
-base = declarative_base()
+Base = declarative_base()
 engine = db_connect()
 Session = sessionmaker(bind=engine)
 

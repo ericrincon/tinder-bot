@@ -1,13 +1,12 @@
 import uuid
 
-from database.db import base
-
+from database.db import Base
 from sqlalchemy.dialects.postgresql import TEXT, INTEGER
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
 
 
-class TinderUser(base):
+class TinderUser(Base):
     __tablename__ = 'tinder_user'
 
     id = Column(TEXT, primary_key=True)
@@ -27,11 +26,11 @@ class TinderUser(base):
                  schools=None, jobs=None):
         """
 
-        :param name:
-        :param age:
-        :param bio:
-        :param images:
-        :param birth_date:
+        :param name: The name of the Tinder user. Usually just their first name
+        :param age: Age of the Tinder user
+        :param bio: Biography on profile
+        :param images: a list of Image references
+        :param birth_date: Birthdate.....
         :param instagram_username:
         :param instagram_photos:
         :param schools:
@@ -52,7 +51,7 @@ class TinderUser(base):
         self.jobs = jobs
 
 
-class Image(base):
+class Image(Base):
     """
     Table for storing images of users
     """
@@ -63,8 +62,7 @@ class Image(base):
     file_path = Column(TEXT)
     user_id = Column(TEXT, ForeignKey('tinder_user.id'))
     image_number = Column(INTEGER)
-    labeled_image = relationship("LabeledImage", back_populates="image")
-    labeled_image_id = Column(TEXT, ForeignKey('labeled_image.id'))
+
 
     def __init__(self, url, file_path, image_number):
         self.id = str(uuid.uuid4())
