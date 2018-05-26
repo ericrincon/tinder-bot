@@ -5,7 +5,6 @@ from sqlalchemy.orm import sessionmaker
 
 from tinder.config import Config
 
-
 def db_connect():
     """
     Performs database connection using database settings from settings.py.
@@ -18,11 +17,10 @@ base = declarative_base()
 engine = db_connect()
 Session = sessionmaker(bind=engine)
 
-
 def create_db():
-    from tinder.database.models import TinderUser, Image
+    from swiper.database.models import LabelingSession, LabledImages, Labels
 
-    tables = [TinderUser, Image]
+    tables = [LabelingSession, LabledImages, Labels]
 
     # Drop and create tables
 

@@ -1,6 +1,8 @@
 import uuid
 
+from swiper.
 from tinder.database import base
+
 from sqlalchemy.dialects.postgresql import TEXT, INTEGER
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
