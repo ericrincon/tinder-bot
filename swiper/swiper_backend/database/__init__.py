@@ -17,13 +17,14 @@ base = declarative_base()
 engine = db_connect()
 Session = sessionmaker(bind=engine)
 
-def create_db():
-    from swiper.database.models import LabelingSession, LabledImages, Labels
+def create_db(drop=False):
+    from swiper.database.models import LabelingSession, LabeledImage, Label
 
-    tables = [LabelingSession, LabledImages, Labels]
+    tables = [LabelingSession, LabeledImage, Label]
 
     # Drop and create tables
 
     for table in tables:
-        table.__table__.drop(engine)
+        if drop:
+            table.__table__.drop(engine)
         table.__table__.create(engine)

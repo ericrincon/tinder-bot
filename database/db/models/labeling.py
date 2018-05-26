@@ -2,10 +2,9 @@ import uuid
 
 import datetime
 
-from swiper.database import base
-from tinder.database.models import Image, TinderUser
+from swiper.swiper_backend.database import base
 
-from sqlalchemy.dialects.postgresql import TEXT, INTEGER, VARCHAR
+from sqlalchemy.dialects.postgresql import TEXT, INTEGER
 from sqlalchemy import Column, ForeignKey, DateTime, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -14,7 +13,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 
 label_association_table = Table('label_association', base.metadata,
     Column('labeling_session', TEXT, ForeignKey('labeling_session.id')),
-    Column('labeled_images', TEXT, ForeignKey('labels.id'))
+    Column('labeled_image', TEXT, ForeignKey('label.id'))
 )
 
 
@@ -42,9 +41,9 @@ class LabeledImage(base):
 
     id = Column(TEXT, primary_key=True)
     label = Column(INTEGER)
-    # child = relationship("Image", uselist=False, back_populates="LabeledImage")
+    image = relationship("Image", uselist=False, back_populates="LabeledImage")
 
-    def __init__(self, label):
+    def __init__(self, label, image):
         """
 
         :param label: An integer representing some classification.
@@ -53,6 +52,7 @@ class LabeledImage(base):
 
         self.id = str(uuid.uuid4())
         self.label = label
+        self.image = image
 
 
 
