@@ -1,3 +1,7 @@
+"""
+Basic script for training a pretrained classifier on Tinder swiping data
+"""
+
 import argparse
 
 import torchvision.transforms as transforms
