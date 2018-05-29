@@ -6,6 +6,7 @@ import argparse
 
 import torchvision.transforms as transforms
 
+from bernard.data.load import TinderProfileImageDataset
 from bernard.vision.classification.models import PretrainedModel
 
 
@@ -27,7 +28,7 @@ def main():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--model", default="alexnet")
     arg_parser.add_argument("--pretrained", type=str2bool, default="1")
-    arg_parser.add_argument("--")
+    arg_parser.add_argument("--data", default="tinder_data")
     args = arg_parser.parse_args()
 
     model = PretrainedModel(args.model, args.pretrained)
@@ -35,6 +36,7 @@ def main():
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
+    tinder_profile_images = TinderProfileImageDataset(args.data)
 
 if __name__ == '__main__':
     main()
