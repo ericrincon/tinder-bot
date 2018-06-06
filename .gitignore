@@ -7,3 +7,4 @@ tinder/config.py
 pynder/
 *.log
 config.py
+tinder_data/
