@@ -15,6 +15,8 @@ from host.host.utils import files
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
 
+from urllib.error import URLError
+
 def firefox(*args, **kwargs):
     firefox_profile = FirefoxProfile()
     firefox_profile.set_preference("geo.prompt.testing", True)
@@ -49,8 +51,13 @@ def download_images(images):
 
 
 def download_image(url, file_name):
-    urllib.request.urlretrieve(url=url, filename=file_name)
-
+    try:
+        urllib.request.urlretrieve(url=url, filename=file_name)
+    except URLError as e:
+        print("--------------------")
+        print("Retrieving URL {} failed".format(url))
+        print("Exception: {}".format(e))
+        print("--------------------")
 
 class WebBot:
     def __init__(self, email, password, browser='firefox'):
