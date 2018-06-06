@@ -13,7 +13,7 @@ from database.db import Session
 from host.host.utils import files
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
-
+from host.host.utils import images as utils_images
 
 def firefox(*args, **kwargs):
     firefox_profile = FirefoxProfile()
@@ -344,7 +344,7 @@ class AutoSwiper(WebBot):
 
                 user = TinderUser(name=name, age=age, bio=bio_text,
                                   images=images)
-                download_images(images)
+                utils_images.download_images(images)
 
                 session.add(user)
                 session.commit()
