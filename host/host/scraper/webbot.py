@@ -1,6 +1,5 @@
 import re
 import time
-import urllib.request
 import sys
 
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
@@ -15,7 +14,6 @@ from host.host.utils import files
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
 
-from urllib.error import URLError
 
 def firefox(*args, **kwargs):
     firefox_profile = FirefoxProfile()
@@ -44,20 +42,6 @@ def get_browser(browser, *args, **kwargs):
     else:
         raise ValueError('Browser {} not defined!'.format(browser))
 
-
-def download_images(images):
-    for image in images:
-        download_image(image.url, image.file_path)
-
-
-def download_image(url, file_name):
-    try:
-        urllib.request.urlretrieve(url=url, filename=file_name)
-    except URLError as e:
-        print("--------------------")
-        print("Retrieving URL {} failed".format(url))
-        print("Exception: {}".format(e))
-        print("--------------------")
 
 class WebBot:
     def __init__(self, email, password, browser='firefox'):
@@ -181,7 +165,6 @@ class WebBot:
         """
         return self.browser.find_element_by_xpath("//*[contains(@class, 'react-swipeable-view-container')")
 
-
     def get_image_url(self, element):
         """
 
@@ -199,7 +182,6 @@ class WebBot:
             url = ""
 
         return url
-
 
     def get_all_image_urls(self):
         """
@@ -239,7 +221,6 @@ class WebBot:
                 image_urls = list(filter(lambda url: url != "", image_urls))
                 image_urls = list(filter(lambda url: url not in user_image_urls, image_urls))
 
-
                 user_image_urls.extend(image_urls)
 
         except NoSuchElementException as e:
@@ -258,7 +239,6 @@ class WebBot:
 
     def get_enable_notifications_not_interested(self):
         return self.browser.find_element_by_xpath("//button[@aria-label='Not interested']")
-
 
 
 def create_images(image_urls, images_file_path, tinder_user_name):
@@ -374,9 +354,6 @@ class AutoSwiper(WebBot):
                 console_info += profile_add_info
 
                 nb_scarped_text = '\n{} profiles scraped'.format(profiles_scraped)
-
-
-
 
                 console_info += nb_scarped_text
 
