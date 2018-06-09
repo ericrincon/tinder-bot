@@ -1,6 +1,6 @@
 from setuptools import setup
 
 setup(
-    name="Bernard-database",
+    name="bernard_database",
     packages=["db"]
 )
