@@ -16,11 +16,11 @@ label_association_table = Table(
 )
 
 
-# labeled_images_table = Table(
-#     "labeled_image_association", Base.metadata,
-#     Column('labeled_image_id', TEXT, ForeignKey("labeled_image.id")),
-#     Column('image_id', TEXT, ForeignKey("image.id"))
-# )
+labeled_images_table = Table(
+    "labeled_image_association", Base.metadata,
+    Column('labeling_session_id', TEXT, ForeignKey("labeling_session.id")),
+    Column('labeled_image_id', TEXT, ForeignKey("labeled_image.id"))
+)
 
 
 class LabelingSession(Base):
@@ -33,7 +33,9 @@ class LabelingSession(Base):
 
     id = Column(TEXT, primary_key=True)
     name = Column(TEXT)
-    children = relationship("Label", secondary=label_association_table,
+    labels = relationship("Label", secondary=label_association_table,
+                            back_populates="labeling_session")
+    labeled_data = relationship("LabeledImage", secondary=labeled_images_table,
                             back_populates="labeling_session")
     created_datetime = Column(DateTime, default=datetime.datetime.utcnow)
 
@@ -49,6 +51,7 @@ class LabeledImage(Base):
     label = Column(INTEGER)
     image_id = Column(TEXT, ForeignKey('image.id'))
     image = relationship("Image")
+    sessions = relationship("LabelingSession", secondary=labeled_images_table, back_populates="labeled_image")
 
     def __init__(self, label, image):
         """
