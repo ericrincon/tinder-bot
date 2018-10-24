@@ -240,6 +240,9 @@ class WebBot:
     def get_enable_notifications_not_interested(self):
         return self.browser.find_element_by_xpath("//button[@aria-label='Not interested']")
 
+    def get_matches_element(self):
+        return self.browser.find_elements_by_xpath("//*[contains(@class, 'desktopMessageList')]")
+
 
 def create_images(image_urls, images_file_path, tinder_user_name):
     images = []
@@ -310,7 +313,6 @@ class AutoSwiper(WebBot):
 
                 check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-                # print('name: {} age: {} bio: {}\r'.format(name is not None, age is not None, bio_text is not  None))
                 bio_info = 'name: {} age: {} bio: {}\n'.format(name is not None, age is not None,
                                                                bio_text is not None)
                 console_info += bio_info
@@ -371,10 +373,6 @@ class AutoSwiper(WebBot):
 
                 return
 
-    def save_images(self, image_urls):
-        for image_url in image_urls:
-            file_name = ''
-            download_image(image_url, file_name)
 
 
 class BioCheck:
