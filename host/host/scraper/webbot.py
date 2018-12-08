@@ -15,6 +15,7 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 
 from host.host.utils import images as utils_images
 
+
 def firefox(*args, **kwargs):
     firefox_profile = FirefoxProfile()
     firefox_profile.set_preference("geo.prompt.testing", True)
@@ -241,7 +242,11 @@ class WebBot:
         return self.browser.find_element_by_xpath("//button[@aria-label='Not interested']")
 
     def get_matches_element(self):
-        return self.browser.find_elements_by_xpath("//*[contains(@class, 'desktopMessageList')]")
+        return self.browser.find_elements_by_xpath("//button[@aria-label='Not interested']")
+
+    def get_location_allow_button(self):
+        return self.browser.find_element_by_xpath("//button[@aria-label='Onboarding.great']")
+
 
 
 def create_images(image_urls, images_file_path, tinder_user_name):
@@ -276,19 +281,21 @@ class AutoSwiper(WebBot):
 
         time.sleep(5)
 
-        next_button = self.get_next_button_element()
-        next_button.click()
+        # next_button = self.get_next_button_element()
+        # next_button.click()
+        location_button = self.get_location_allow_button()
+        location_button.click()
+
 
         # Enhanced messaging prompt
-        next_button = self.get_next_button_element()
-        next_button.click()
-
+        # next_button = self.get_next_button_element()
+        # next_button.click()
         # Find the share button and click it
-        time.sleep(3)
-        share_button = self.get_share_button()
-        share_button.click()
+        # time.sleep(3)
+        # share_button = self.get_share_button()
+        # share_button.click()
 
-        time.sleep(10)
+        time.sleep(5)
         not_interested_button = self.get_enable_notifications_not_interested()
         not_interested_button.click()
 
@@ -374,10 +381,9 @@ class AutoSwiper(WebBot):
                 return
 
 
-
 class BioCheck:
     def __init__(self):
-        self.regex = [re.compile(r'not into hook ups|no hookups')]
+        self.regex = [re.compile(r"not into hook ups|no hookups")]
 
     def check(self, bio):
         bio = bio.lower()
