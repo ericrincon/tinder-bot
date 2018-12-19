@@ -286,18 +286,8 @@ class AutoSwiper(WebBot):
 
         time.sleep(5)
 
-        # next_button = self.get_next_button_element()
-        # next_button.click()
         location_button = self.get_location_allow_button()
         location_button.click()
-
-        # Enhanced messaging prompt
-        # next_button = self.get_next_button_element()
-        # next_button.click()
-        # Find the share button and click it
-        # time.sleep(3)
-        # share_button = self.get_share_button()
-        # share_button.click()
 
         time.sleep(5)
         not_interested_button = self.get_enable_notifications_not_interested()
