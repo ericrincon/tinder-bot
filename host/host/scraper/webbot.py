@@ -15,6 +15,17 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 
 from host.host.utils import images as utils_images
 
+import logging
+
+# set up logget
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.ERROR)
+
 
 def firefox(*args, **kwargs):
     firefox_profile = FirefoxProfile()
@@ -63,7 +74,7 @@ class WebBot:
 
             return profile_text.text
         except Exception as e:
-            print(e)
+            logger.debug("Bio not found: {}".format(e))
 
             return None
 
@@ -85,7 +96,7 @@ class WebBot:
             self.browser.switch_to_window(self.browser.window_handles[-1])
 
         except Exception as e:
-            print(e)
+            logger.debug("Could not log into facebook: {}".format(e))
 
         email_element = self.browser.find_element_by_name('email')
         password_element = self.browser.find_element_by_name('pass')
@@ -143,8 +154,7 @@ class WebBot:
                     name = name.replace(',', '').strip()
                     age = int(age.replace(',', '').strip())
         except NoSuchElementException as e:
-            print(e)
-            print('Could not find name age element!')
+            logger.debug("Failed with exception: {} - Could not find name age element!".format(e))
 
             return None, None
 
@@ -173,6 +183,7 @@ class WebBot:
         :return:
         """
         style = element.get_attribute("style")
+        print(style)
 
         if style != "":
 
@@ -197,8 +208,7 @@ class WebBot:
         try:
             picture_elements = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__slider')]")
         except NoSuchElementException as e:
-            print(e)
-            print('profileCard__slider element was not found')
+            logger.debug("Failed to get image urls: {}".format(e))
 
             return []
 
@@ -225,8 +235,7 @@ class WebBot:
                 user_image_urls.extend(image_urls)
 
         except NoSuchElementException as e:
-            print(e)
-            print('An image url could not be found!')
+            logger.debug("An image url could not be found!\n{}".format(e))
 
             return None
 
@@ -246,7 +255,6 @@ class WebBot:
 
     def get_location_allow_button(self):
         return self.browser.find_element_by_xpath("//button[@aria-label='Onboarding.great']")
-
 
 
 def create_images(image_urls, images_file_path, tinder_user_name):
@@ -285,7 +293,6 @@ class AutoSwiper(WebBot):
         # next_button.click()
         location_button = self.get_location_allow_button()
         location_button.click()
-
 
         # Enhanced messaging prompt
         # next_button = self.get_next_button_element()
@@ -367,6 +374,7 @@ class AutoSwiper(WebBot):
                 console_info += nb_scarped_text
 
                 sys.stdout.write(console_info)
+                sys.stdout.flush()
 
                 if not bio_checker.check(bio_text):
                     print('Shes not into hookups!')
