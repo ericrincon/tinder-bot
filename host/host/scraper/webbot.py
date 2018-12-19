@@ -183,13 +183,10 @@ class WebBot:
         :return:
         """
         style = element.get_attribute("style")
-        print(style)
 
         if style != "":
-
-            url = style.split()[-1][5:]
-            url = url[:len(url) - 3]
-
+            url = re.findall("(?<=url\(\")(.*)(?=\"\))", style)
+            url = url[0] if len(url) > 0 else ""
         else:
             url = ""
 
