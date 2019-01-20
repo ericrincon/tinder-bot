@@ -17,7 +17,6 @@ from host.host.utils import images as utils_images
 
 import logging
 
-# set up logget
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 formatter = logging.Formatter(
@@ -251,7 +250,7 @@ class WebBot:
         return self.browser.find_elements_by_xpath("//button[@aria-label='Not interested']")
 
     def get_location_allow_button(self):
-        return self.browser.find_element_by_xpath("//button[@aria-label='Onboarding.great']")
+        return self.browser.find_element_by_xpath("//button[@aria-label='Allow']")
 
 
 def create_images(image_urls, images_file_path, tinder_user_name):
