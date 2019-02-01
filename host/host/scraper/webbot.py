@@ -55,10 +55,11 @@ def get_browser(browser, *args, **kwargs):
 
 
 class WebBot:
-    def __init__(self, email, password, browser='firefox'):
+    def __init__(self, email, password, browser='firefox', debug=False):
         self.email = email
         self.password = password
         self.browser = get_browser(browser)
+        self.debug = debug
 
         self.browser.get('https://tinder.com/app/login')
 
@@ -317,6 +318,10 @@ class AutoSwiper(WebBot):
                                                                bio_text is not None)
                 console_info += bio_info
                 if name is None and age is None and bio_text is None:
+
+                    if self.debug:
+                        response = input("There was an error, press any button to continue")
+
                     sys.stdout.write('Error: Elements are gone restarting...')
                     sys.stdout.flush()
 
@@ -337,6 +342,9 @@ class AutoSwiper(WebBot):
                 if image_urls is not None:
                     images = create_images(image_urls, self.images_file_path, image_name)
                 else:
+                    if self.debug:
+                        response = input("There was an error, press any button to continue")
+
                     sys.stdout.write('Error: Elements are gone restarting...')
                     sys.stdout.flush()
 
@@ -368,6 +376,9 @@ class AutoSwiper(WebBot):
                 else:
                     self.swipe_right()
             except StaleElementReferenceException as e:
+                if self.debug:
+                    response = input("There was an error, press any button to continue")
+                    
                 print(e)
                 print('Elements are gone restarting...')
                 self.browser.close()

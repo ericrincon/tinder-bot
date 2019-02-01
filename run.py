@@ -30,7 +30,7 @@ def main():
     args = parser.parse_args()
 
     while True:
-        auto_swiper = AutoSwiper(Config.email, Config.password, browser=args.browser)
+        auto_swiper = AutoSwiper(Config.email, Config.password, browser=args.browser, debud=args.debug)
         auto_swiper.start()
 
 
