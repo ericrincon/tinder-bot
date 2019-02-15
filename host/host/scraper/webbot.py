@@ -289,7 +289,7 @@ class AutoSwiper(WebBot):
         location_button = self.get_location_allow_button()
         location_button.click()
 
-        time.sleep(5)
+        time.sleep(10)
         not_interested_button = self.get_enable_notifications_not_interested()
         not_interested_button.click()
 
@@ -342,6 +342,8 @@ class AutoSwiper(WebBot):
                 if image_urls is not None:
                     images = create_images(image_urls, self.images_file_path, image_name)
                 else:
+                    print("image_urls is None")
+
                     if self.debug:
                         response = input("There was an error, press any button to continue")
 
@@ -378,7 +380,7 @@ class AutoSwiper(WebBot):
             except StaleElementReferenceException as e:
                 if self.debug:
                     response = input("There was an error, press any button to continue")
-                    
+
                 print(e)
                 print('Elements are gone restarting...')
                 self.browser.close()
