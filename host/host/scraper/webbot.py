@@ -1,6 +1,7 @@
 import re
 import time
 import sys
+import robobrowser
 
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
@@ -14,6 +15,8 @@ from host.host.utils import files
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
 from host.host.utils import images as utils_images
+
+from bs4 import BeautifulSoup
 
 import logging
 
@@ -302,6 +305,9 @@ class AutoSwiper(WebBot):
             try:
                 time.sleep(2)
 
+                soup = BeautifulSoup(self.browser.page_source)
+                print(soup)
+
                 bio_text = self.get_bio()
 
                 if bio_text is None:
@@ -398,3 +404,32 @@ class BioCheck:
             if exp.match(bio):
                 return False
         return True
+
+
+class TokenBot:
+    """
+    Automates the retrieval of an authtoken and a user id
+    """
+
+    def __init__(self, user_agent=None, auth_url=None):
+        self.user_agent = user_agent
+        self.auth_url = auth_url
+
+    def get_access_token(self, email, password):
+        s = robobrowser.RoboBrowser(user_agent=self.user_agent, parser="lxml")
+        s.open(self.auth_url)
+
+        f = s.get_form()
+        f["pass"] = password
+        f["email"] = email
+        s.submit_form(f)
+        f = s.get_form()
+
+        if f.submit_fields.get('__CONFIRM__'):
+            s.submit_form(f, submit=f.submit_fields['__CONFIRM__'])
+        else:
+            raise Exception(
+                "Couldn't find the continue button. Maybe you supplied the wrong login credentials? Or maybe Facebook is asking a security question?")
+        access_token = re.search(r"access_token=([\w\d]+)", s.response.content.decode()).groups()[0]
+
+        return access_token
