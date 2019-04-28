@@ -6,6 +6,8 @@ from typing import List, Tuple
 from torchvision import transforms, utils
 from skimage import io, transform
 
+import math
+
 
 def split_files_training_splits(file_path):
     pass
@@ -34,6 +36,33 @@ def list_dir(dir_path: str, file_ext: Tuple = (".jpg", ".png"),
     return files
 
 
+def _parse_space_label(base_file_name: str) -> float:
+    label = float(base_file_name.split(" ")[-1])
+
+    return label
+
+def _parse_underline_label(base_file_name: str) -> float:
+    label = float(base_file_name.split("_")[-1])
+
+    return label
+
+def parse_label(file_name: str) -> int:
+
+    base_file_name = str(os.path.basename(file_name).split(".")[0])
+
+    if "_" in base_file_name:
+        label = _parse_underline_label(base_file_name)
+    elif " "in base_file_name:
+        label = _parse_space_label(base_file_name)
+    else:
+        raise ValueError("Could not parse label from file: {}".format(base_file_name))
+
+    return round(label)
+
+
+
+
+
 class RateMeDataset(Dataset):
     def __init__(self, genders: List[str], dir_path=None, file_paths=None):
         super(RateMeDataset, self).__init__()
@@ -54,4 +83,9 @@ class RateMeDataset(Dataset):
         return len(self.file_paths)
 
     def __getitem__(self, item):
-        return {}
+        file_path = self.file_paths[item]
+        print(file_path)
+        image = io.imread(file_path)
+        label = parse_label(file_path)
+
+        return {"image": image, "label": label}
