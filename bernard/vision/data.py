@@ -35,11 +35,8 @@ def list_dir(dir_path: str, file_ext: Tuple = (".jpg", ".png"),
 
 
 class RateMeDataset(Dataset):
-    def __init__(self, dir_path=None, file_paths=None, genders: List = None):
+    def __init__(self, genders: List[str], dir_path=None, file_paths=None):
         super(RateMeDataset, self).__init__()
-
-        if genders is None:
-            genders = ["women"]
 
         if file_paths is None and dir_path is None:
             raise ValueError("You must either pass a directory path or a list of file paths!")
