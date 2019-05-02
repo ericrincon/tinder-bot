@@ -3,14 +3,11 @@ import os
 from torch.utils.data import Dataset
 
 from typing import List, Tuple
-from torchvision import transforms, utils
-from skimage import io, transform
 
-import math
+from skimage import io
 
-
-def split_files_training_splits(file_path):
-    pass
+from torchvision import transforms
+from bernard.vision.transforms import Transform, Rescale, RandomCrop, ToTensor
 
 
 def list_dir(dir_path: str, file_ext: Tuple = (".jpg", ".png"),
@@ -41,18 +38,19 @@ def _parse_space_label(base_file_name: str) -> float:
 
     return label
 
+
 def _parse_underline_label(base_file_name: str) -> float:
     label = float(base_file_name.split("_")[-1])
 
     return label
 
-def parse_label(file_name: str) -> int:
 
+def parse_label(file_name: str) -> int:
     base_file_name = str(os.path.basename(file_name).split(".")[0])
 
     if "_" in base_file_name:
         label = _parse_underline_label(base_file_name)
-    elif " "in base_file_name:
+    elif " " in base_file_name:
         label = _parse_space_label(base_file_name)
     else:
         raise ValueError("Could not parse label from file: {}".format(base_file_name))
@@ -60,11 +58,9 @@ def parse_label(file_name: str) -> int:
     return round(label)
 
 
-
-
-
 class RateMeDataset(Dataset):
-    def __init__(self, genders: List[str], dir_path=None, file_paths=None):
+    def __init__(self, genders: List[str], dir_path=None, file_paths=None,
+                 transformations: List[Transform] = None):
         super(RateMeDataset, self).__init__()
 
         if file_paths is None and dir_path is None:
@@ -76,16 +72,28 @@ class RateMeDataset(Dataset):
         if dir_path is not None:
             file_paths = list_dir(dir_path, file_filter=genders)
 
+        if transformations is None:
+            transformations = transforms.Compose([
+                Rescale((512, 512)),
+                RandomCrop((256, 256)),
+                ToTensor()
+            ])
+
         self.dir_path = dir_path
         self.file_paths = file_paths
+        self.transformations = transformations
 
     def __len__(self):
         return len(self.file_paths)
 
     def __getitem__(self, item):
         file_path = self.file_paths[item]
-        print(file_path)
         image = io.imread(file_path)
         label = parse_label(file_path)
 
-        return {"image": image, "label": label}
+        sample = {"image": image, "label": label}
+
+        if self.transformations is not None:
+            sample = self.transformations(sample)
+
+        return sample
