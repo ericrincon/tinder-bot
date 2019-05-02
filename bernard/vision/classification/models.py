@@ -2,23 +2,34 @@ import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
 
-class PretrainedModel:
-    _models = {
-        "resnet18": models.resnet18,
-        "alexnet": models.alexnet,
-        "squeezenet": models.squeezenet1_0,
-        "vgg16": models.vgg16,
-        "densenet": models.densenet161,
-        "incepetion": models.inception_v3,
-    }
+_models = {
+    "resnet18": models.resnet18,
+    "alexnet": models.alexnet,
+    "squeezenet": models.squeezenet1_0,
+    "vgg16": models.vgg16,
+    "densenet": models.densenet161,
+    "incepetion": models.inception_v3,
+}
 
-    def __init__(self, model_name, pretrained=True, finetune=False):
-        self.model_name = model_name
+
+def get_predefined_model(model_name: str):
+    model_name = model_name.lower().strip()
+
+    if model_name not in _models:
+        raise ValueError("Model {} not defined".format(model_name))
+
+    return _models[model_name]
+
+
+class PretrainedModel(nn.Module):
+
+    def __init__(self, model_name: str, nb_classes: int, pretrained: bool = True,
+                 finetune: bool = False):
+        super(PretrainedModel, self).__init__()
+
+        self.feature_extractor = self._build_feature_extractor(model_name, pretrained)
+        self.output = nn.Linear(self.feature_extractor, nb_classes)
         self.finetune = finetune
-        self.model = self._get_model(model_name, pretrained)
-
-
-
 
     def _set_model_trainable(self, model, trainable):
         """
@@ -33,18 +44,6 @@ class PretrainedModel:
 
         for param in model.parameters():
             param.requires_grad = trainable
-
-        return model
-
-    def _set_linear_layer(self, model, nb_params, nb_classes):
-        """
-
-        :param model:
-        :param nb_classes:
-        :return:
-        """
-
-        model.fc = nn.Linear(nb_params, nb_classes)
 
         return model
 
@@ -75,21 +74,23 @@ class PretrainedModel:
 
         return model
 
-    def _get_model(self, model_name, pretrained):
-        if model_name not in self._models:
-            raise ValueError("The model \"{}\" is not defined!")
+    def _build_feature_extractor(self, model_name, pretrained):
+        Model = get_predefined_model(model_name)
+        model = Model(pretrained)
 
-        return self._models[model_name](pretrained)
-
+        return model
 
     def _get_trainable_params(self):
         if self.finetune:
-            return self.model
+            return self.feature_extractor
         else:
-            return self.model.fc.params()
-
+            return self.feature_extractor.fc.params()
 
     def fit(self):
         params = self._get_trainable_params()
 
         optim.SGD(params, lr=1e-2, momentum=0.9)
+
+
+def build_model(model_name: str, pretrained):
+    PretrainedModel()
