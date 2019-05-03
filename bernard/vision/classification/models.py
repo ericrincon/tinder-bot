@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torchvision.models as models
-import torch.optim as optim
 
 _models = {
     "resnet18": models.resnet18,
@@ -86,11 +85,3 @@ class PretrainedModel(nn.Module):
         else:
             return self.feature_extractor.fc.params()
 
-    def fit(self):
-        params = self._get_trainable_params()
-
-        optim.SGD(params, lr=1e-2, momentum=0.9)
-
-
-def build_model(model_name: str, pretrained):
-    PretrainedModel()
