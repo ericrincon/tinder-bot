@@ -168,7 +168,7 @@ class WebBot:
         return self.browser.find_element_by_xpath("//*[contains(@class, 'recCard__openProfile')]")
 
     def get_profile_card_element(self):
-        return self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard')]")
+        return self.browser.find_element_by_xpath("//*[contains(@class, 'recsCardboard__cards')]")
 
     def get_image_slider_element(self):
         """
@@ -206,6 +206,9 @@ class WebBot:
         time.sleep(1)
 
         try:
+
+            soup = BeautifulSoup(self.browser.page_source)
+            # results = soup.find_all('div', attrs={"class": "home-summary-row"})
             picture_elements = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__slider')]")
         except NoSuchElementException as e:
             logger.debug("Failed to get image urls: {}".format(e))
@@ -280,14 +283,16 @@ def get_tinder_user_image_dir(images_file_path, tinder_user_name):
 class AutoSwiper(WebBot):
     def __init__(self, *args, **kwargs):
         super(AutoSwiper, self).__init__(*args, **kwargs)
+
         self.images_file_path = '/Users/ericrincon/tinder_data/images'
+        self.profile_count = 0
 
         files.make_check_dir(self.images_file_path)
 
     def start(self):
         self.login_facebook()
 
-        time.sleep(5)
+        time.sleep(10)
 
         location_button = self.get_location_allow_button()
         location_button.click()
@@ -297,16 +302,12 @@ class AutoSwiper(WebBot):
         not_interested_button.click()
 
         bio_checker = BioCheck()
-        profiles_scraped = 0
 
         while True:
             console_info = ''
 
             try:
                 time.sleep(2)
-
-                soup = BeautifulSoup(self.browser.page_source)
-                print(soup)
 
                 bio_text = self.get_bio()
 
@@ -367,11 +368,12 @@ class AutoSwiper(WebBot):
                 session.add(user)
                 session.commit()
                 session.close()
-                profiles_scraped += 1
+
+                self.profile_count += 1
                 profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
                 console_info += profile_add_info
 
-                nb_scarped_text = '\n{} profiles scraped'.format(profiles_scraped)
+                nb_scarped_text = '\n{} profiles scraped'.format(self.profile_count)
 
                 console_info += nb_scarped_text
 
@@ -399,10 +401,13 @@ class BioCheck:
         self.regex = [re.compile(r"not into hook ups|no hookups")]
 
     def check(self, bio):
+
         bio = bio.lower()
+
         for exp in self.regex:
             if exp.match(bio):
                 return False
+
         return True
 
 
