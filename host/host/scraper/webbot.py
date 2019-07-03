@@ -289,6 +289,18 @@ class AutoSwiper(WebBot):
 
         files.make_check_dir(self.images_file_path)
 
+
+    def restart_check(self):
+        if self.debug:
+            response = input("There was an error, press any button to continue")
+
+        sys.stdout.write('Error: Elements are gone restarting...')
+        sys.stdout.flush()
+
+        input("Press Enter to restart...")
+
+        self.browser.close()
+
     def start(self):
         self.login_facebook()
 
@@ -325,15 +337,7 @@ class AutoSwiper(WebBot):
                                                                bio_text is not None)
                 console_info += bio_info
                 if name is None and age is None and bio_text is None:
-
-                    if self.debug:
-                        response = input("There was an error, press any button to continue")
-
-                    sys.stdout.write('Error: Elements are gone restarting...')
-                    sys.stdout.flush()
-
-                    self.browser.close()
-
+                    self.restart_check()
                     return
 
                 while check:
@@ -350,14 +354,7 @@ class AutoSwiper(WebBot):
                     images = create_images(image_urls, self.images_file_path, image_name)
                 else:
                     print("image_urls is None")
-
-                    if self.debug:
-                        response = input("There was an error, press any button to continue")
-
-                    sys.stdout.write('Error: Elements are gone restarting...')
-                    sys.stdout.flush()
-
-                    self.browser.close()
+                    self.restart_check()
 
                     return
 
@@ -386,12 +383,7 @@ class AutoSwiper(WebBot):
                 else:
                     self.swipe_right()
             except StaleElementReferenceException as e:
-                if self.debug:
-                    response = input("There was an error, press any button to continue")
-
-                print(e)
-                print('Elements are gone restarting...')
-                self.browser.close()
+                self.restart_check()
 
                 return
 
