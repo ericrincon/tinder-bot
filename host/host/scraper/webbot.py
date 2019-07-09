@@ -378,10 +378,10 @@ class AutoSwiper(WebBot):
                 sys.stdout.flush()
 
                 if not bio_checker.check(bio_text):
-                    print('Shes not into hookups!')
                     self.swipe_left()
                 else:
                     self.swipe_right()
+
             except StaleElementReferenceException as e:
                 self.restart_check()
 
