@@ -2,6 +2,7 @@ import re
 import time
 import sys
 import robobrowser
+import logging
 
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
@@ -18,14 +19,15 @@ from host.host.utils import images as utils_images
 
 from bs4 import BeautifulSoup
 
-import logging
-
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
+file_handler = logging.FileHandler('errors.log')
 formatter = logging.Formatter(
     '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
+file_handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
+logger.addHandler(file_handler)
 logger.setLevel(logging.ERROR)
 
 
@@ -77,7 +79,7 @@ class WebBot:
 
             return profile_text.text
         except Exception as e:
-            logger.debug("Bio not found: {}".format(e))
+            logger.error("Bio not found: {}".format(e))
 
             return None
 
@@ -99,7 +101,7 @@ class WebBot:
             self.browser.switch_to_window(self.browser.window_handles[-1])
 
         except Exception as e:
-            logger.debug("Could not log into facebook: {}".format(e))
+            logger.error("Could not log into facebook: {}".format(e))
 
         email_element = self.browser.find_element_by_name('email')
         password_element = self.browser.find_element_by_name('pass')
@@ -157,7 +159,7 @@ class WebBot:
                     name = name.replace(',', '').strip()
                     age = int(age.replace(',', '').strip())
         except NoSuchElementException as e:
-            logger.debug("Failed with exception: {} - Could not find name age element!".format(e))
+            logger.error("Failed with exception: {} - Could not find name age element!".format(e))
 
             return None, None
 
@@ -211,7 +213,7 @@ class WebBot:
             # results = soup.find_all('div', attrs={"class": "home-summary-row"})
             picture_elements = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__slider')]")
         except NoSuchElementException as e:
-            logger.debug("Failed to get image urls: {}".format(e))
+            logger.error("Failed to get image urls: {}".format(e))
 
             return []
 
@@ -238,7 +240,7 @@ class WebBot:
                 user_image_urls.extend(image_urls)
 
         except NoSuchElementException as e:
-            logger.debug("An image url could not be found!\n{}".format(e))
+            logger.error("An image url could not be found!\n{}".format(e))
 
             return None
 
@@ -288,7 +290,6 @@ class AutoSwiper(WebBot):
         self.profile_count = 0
 
         files.make_check_dir(self.images_file_path)
-
 
     def restart_check(self):
         if self.debug:
