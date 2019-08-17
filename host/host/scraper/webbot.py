@@ -84,12 +84,12 @@ class WebBot:
             return None
 
     def swipe_left(self):
-        elem = self.browser.find_element_by_css_selector('body')
-        elem.send_keys(Keys.ARROW_LEFT)
+        get_body_element = lambda: self.browser.find_element_by_css_selector('body')
+        get_body_element().send_keys(Keys.ARROW_LEFT)
 
     def swipe_right(self):
-        elem = self.browser.find_element_by_css_selector('body')
-        elem.send_keys(Keys.ARROW_RIGHT)
+        get_body_element = lambda: self.browser.find_element_by_css_selector('body')
+        get_body_element().send_keys(Keys.ARROW_RIGHT)
 
     def login_facebook(self):
         time.sleep(5)
@@ -103,11 +103,11 @@ class WebBot:
         except Exception as e:
             logger.error("Could not log into facebook: {}".format(e))
 
-        email_element = self.browser.find_element_by_name('email')
-        password_element = self.browser.find_element_by_name('pass')
+        get_email_element = lambda: self.browser.find_element_by_name('email')
+        get_password_element = lambda: self.browser.find_element_by_name('pass')
 
-        email_element.send_keys(self.email)
-        password_element.send_keys(self.password)
+        get_email_element().send_keys(self.email)
+        get_password_element().send_keys(self.password)
 
         login_button = self.browser.find_element_by_name('login')
         login_button.click()
@@ -187,13 +187,12 @@ class WebBot:
         :param element:
         :return:
         """
-        style = element.get_attribute("style")
+        style = element.get("style")
+        url = ""
 
-        if style != "":
+        if style is not None and style != "":
             url = re.findall("(?<=url\(\")(.*)(?=\"\))", style)
             url = url[0] if len(url) > 0 else ""
-        else:
-            url = ""
 
         return url
 
@@ -209,9 +208,10 @@ class WebBot:
 
         try:
 
-            soup = BeautifulSoup(self.browser.page_source)
+            # soup = BeautifulSoup(self.browser.page_source)
             # results = soup.find_all('div', attrs={"class": "home-summary-row"})
-            picture_elements = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__slider')]")
+            get_picture_elements = lambda: self.browser.find_element_by_xpath(
+                "//*[contains(@class, 'profileCard__slider')]")
         except NoSuchElementException as e:
             logger.error("Failed to get image urls: {}".format(e))
 
@@ -228,12 +228,11 @@ class WebBot:
                 time.sleep(2)
 
                 # find a better way but this works for now...
-                picture_elements.send_keys(Keys.SPACE)
+                get_picture_elements().send_keys(Keys.SPACE)
+                soup = BeautifulSoup(self.browser.page_source)
+                results = soup.find_all('div', attrs={"class": "profileCard__slider__img"})
 
-                image_elements = picture_elements.find_elements_by_xpath(
-                    "//*[contains(@class, 'profileCard__slider__img')]")
-
-                image_urls = list(map(lambda element: self.get_image_url(element), image_elements))
+                image_urls = list(map(lambda element: self.get_image_url(element), results))
                 image_urls = list(filter(lambda url: url != "", image_urls))
                 image_urls = list(filter(lambda url: url not in user_image_urls, image_urls))
 
@@ -319,74 +318,69 @@ class AutoSwiper(WebBot):
         while True:
             console_info = ''
 
-            try:
-                time.sleep(2)
+            time.sleep(2)
 
-                bio_text = self.get_bio()
+            bio_text = self.get_bio()
 
-                if bio_text is None:
-                    bio_text = 'No bio!'
-                name, age = self.get_name_age()
-                image_urls = self.get_all_image_urls()
+            if bio_text is None:
+                bio_text = 'No bio!'
+            name, age = self.get_name_age()
+            image_urls = self.get_all_image_urls()
 
-                session = Session()
-                image_name = name
+            session = Session()
+            image_name = name
+
+            check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
+
+            bio_info = 'name: {} age: {} bio: {}\n'.format(name is not None, age is not None,
+                                                           bio_text is not None)
+            console_info += bio_info
+            #
+            # if name is None and age is None and bio_text is None:
+            #     self.restart_check()
+            #     return
+
+            while check:
+                if image_name and '_' in image_name:
+                    image_name, number = image_name.split('_')
+                    number = int(number) + 1
+                else:
+                    number = 0
+                image_name = '{}_{}'.format(image_name, number)
 
                 check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-                bio_info = 'name: {} age: {} bio: {}\n'.format(name is not None, age is not None,
-                                                               bio_text is not None)
-                console_info += bio_info
-                if name is None and age is None and bio_text is None:
-                    self.restart_check()
-                    return
-
-                while check:
-                    if image_name and '_' in image_name:
-                        image_name, number = image_name.split('_')
-                        number = int(number) + 1
-                    else:
-                        number = 0
-                    image_name = '{}_{}'.format(image_name, number)
-
-                    check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
-
-                if image_urls is not None:
-                    images = create_images(image_urls, self.images_file_path, image_name)
-                else:
-                    print("image_urls is None")
-                    self.restart_check()
-
-                    return
-
-                user = TinderUser(name=name, age=age, bio=bio_text,
-                                  images=images)
-                utils_images.download_images(images)
-
-                session.add(user)
-                session.commit()
-                session.close()
-
-                self.profile_count += 1
-                profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
-                console_info += profile_add_info
-
-                nb_scarped_text = '\n{} profiles scraped'.format(self.profile_count)
-
-                console_info += nb_scarped_text
-
-                sys.stdout.write(console_info)
-                sys.stdout.flush()
-
-                if not bio_checker.check(bio_text):
-                    self.swipe_left()
-                else:
-                    self.swipe_right()
-
-            except StaleElementReferenceException as e:
+            if image_urls is not None:
+                images = create_images(image_urls, self.images_file_path, image_name)
+            else:
+                print("image_urls is None")
                 self.restart_check()
 
                 return
+
+            user = TinderUser(name=name, age=age, bio=bio_text,
+                              images=images)
+            utils_images.download_images(images)
+
+            session.add(user)
+            session.commit()
+            session.close()
+
+            self.profile_count += 1
+            profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
+            console_info += profile_add_info
+
+            nb_scarped_text = '\n{} profiles scraped'.format(self.profile_count)
+
+            console_info += nb_scarped_text
+
+            sys.stdout.write(console_info)
+            sys.stdout.flush()
+
+            if not bio_checker.check(bio_text):
+                self.swipe_left()
+            else:
+                self.swipe_right()
 
 
 class BioCheck:
