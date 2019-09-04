@@ -13,7 +13,8 @@ from database.db.models.user import TinderUser, Image
 from database.db import Session
 
 from host.host.utils import files
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
+
 
 from host.host.utils import images as utils_images
 
@@ -335,10 +336,6 @@ class AutoSwiper(WebBot):
             bio_info = 'name: {} age: {} bio: {}\n'.format(name is not None, age is not None,
                                                            bio_text is not None)
             console_info += bio_info
-            #
-            # if name is None and age is None and bio_text is None:
-            #     self.restart_check()
-            #     return
 
             while check:
                 if image_name and '_' in image_name:
@@ -352,36 +349,38 @@ class AutoSwiper(WebBot):
 
             if image_urls is not None:
                 images = create_images(image_urls, self.images_file_path, image_name)
-            else:
-                print("image_urls is None")
-                self.restart_check()
 
-                return
+                user = TinderUser(name=name, age=age, bio=bio_text,
+                                  images=images)
+                utils_images.download_images(images)
 
-            user = TinderUser(name=name, age=age, bio=bio_text,
-                              images=images)
-            utils_images.download_images(images)
+                session.add(user)
+                session.commit()
+                session.close()
 
-            session.add(user)
-            session.commit()
-            session.close()
+                self.profile_count += 1
+                profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
+                console_info += profile_add_info
 
-            self.profile_count += 1
-            profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
-            console_info += profile_add_info
+                nb_scarped_text = '\n{} profiles scraped'.format(self.profile_count)
 
-            nb_scarped_text = '\n{} profiles scraped'.format(self.profile_count)
+                console_info += nb_scarped_text
 
-            console_info += nb_scarped_text
-
-            sys.stdout.write(console_info)
-            sys.stdout.flush()
+                sys.stdout.write(console_info)
+                sys.stdout.flush()
 
             if not bio_checker.check(bio_text):
                 self.swipe_left()
             else:
                 self.swipe_right()
 
+            time.sleep(2)
+
+            try:
+                continue_swiping_element = self.browser.find_element_by_xpath('//a[@href="' + "/app/recs" + '"]')
+                continue_swiping_element.click()
+            except (NoSuchElementException, WebDriverException):  # If didnt match with person then go on
+                pass
 
 class BioCheck:
     def __init__(self):
