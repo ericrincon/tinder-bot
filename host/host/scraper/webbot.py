@@ -15,7 +15,6 @@ from database.db import Session
 from host.host.utils import files
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
-
 from host.host.utils import images as utils_images
 
 from bs4 import BeautifulSoup
@@ -61,11 +60,12 @@ def get_browser(browser, *args, **kwargs):
 
 
 class WebBot:
-    def __init__(self, email, password, browser='firefox', debug=False):
+    def __init__(self, email, password, sleep_multiplier: int = 1, browser='firefox', debug=False):
         self.email = email
         self.password = password
         self.browser = get_browser(browser)
         self.debug = debug
+        self.sleep_multiplier = sleep_multiplier
 
         self.browser.get('https://tinder.com/app/login')
 
@@ -73,7 +73,7 @@ class WebBot:
         try:
             elem = self.browser.find_element_by_css_selector('body')
             elem.send_keys(Keys.ARROW_UP)
-            time.sleep(2)
+            time.sleep(2 * self.sleep_multiplier)
             profile_card = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
 
             profile_text = profile_card.find_element_by_css_selector('span')
@@ -93,12 +93,12 @@ class WebBot:
         get_body_element().send_keys(Keys.ARROW_RIGHT)
 
     def login_facebook(self):
-        time.sleep(5)
+        time.sleep(5 * self.sleep_multiplier)
 
         try:
             login_button = self.browser.find_element_by_xpath('//button[@aria-label="Log in with Facebook"]')
             login_button.click()
-            time.sleep(2)
+            time.sleep(2 * self.sleep_multiplier)
             self.browser.switch_to_window(self.browser.window_handles[-1])
 
         except Exception as e:
@@ -205,7 +205,7 @@ class WebBot:
 
         :return: image urls list if image urls are found if a element was not found exception
         """
-        time.sleep(1)
+        time.sleep(1 * self.sleep_multiplier)
 
         try:
 
@@ -319,7 +319,7 @@ class AutoSwiper(WebBot):
         while True:
             console_info = ''
 
-            time.sleep(2)
+            time.sleep(2 * self.sleep_multiplier)
 
             bio_text = self.get_bio()
 
@@ -374,13 +374,14 @@ class AutoSwiper(WebBot):
             else:
                 self.swipe_right()
 
-            time.sleep(2)
+            time.sleep(2 * self.sleep_multiplier)
 
             try:
                 continue_swiping_element = self.browser.find_element_by_xpath('//a[@href="' + "/app/recs" + '"]')
                 continue_swiping_element.click()
             except (NoSuchElementException, WebDriverException):  # If didnt match with person then go on
                 pass
+
 
 class BioCheck:
     def __init__(self):
