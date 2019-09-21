@@ -19,6 +19,8 @@ from host.host.utils import images as utils_images
 
 from bs4 import BeautifulSoup
 
+from googletrans import Translator
+
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 file_handler = logging.FileHandler('errors.log')
@@ -70,15 +72,33 @@ class WebBot:
         self.browser.get('https://tinder.com/app/login')
 
     def get_bio(self):
+
+        time.sleep(2)
+        # get_bio_text = lambda: self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
+        #
+        # # find a better way but this works for now...
+        # text_element = get_bio_text()
+        #
+        # soup = BeautifulSoup(self.browser.page_source)
+        # results = soup.find_all('div', attrs={"class": "profileCard__slider__img"})
+        #
+        # image_urls = list(map(lambda element: self.get_image_url(element), results))
+        # image_urls = list(filter(lambda url: url != "", image_urls))
+        # image_urls = list(filter(lambda url: url not in user_image_urls, image_urls))
+
+
         try:
             elem = self.browser.find_element_by_css_selector('body')
             elem.send_keys(Keys.ARROW_UP)
             time.sleep(2 * self.sleep_multiplier)
+            soup = BeautifulSoup(self.browser.page_source)
+            # print(soup)
+            # print(soup.select('div[class*="profileCard__bio"]'))
             profile_card = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
-
             profile_text = profile_card.find_element_by_css_selector('span')
 
             return profile_text.text
+
         except Exception as e:
             logger.error("Bio not found: {}".format(e))
 
@@ -147,9 +167,9 @@ class WebBot:
         try:
 
             profilecard_header_info = self.browser.find_element_by_xpath(
-                "//*[contains(@class, 'profileCard__header__info')]")
+                "//*[contains(@class, 'Ov(h) Ws(nw) Ell')]")
             name_age = profilecard_header_info.find_element_by_xpath(
-                "//*[contains(@class, 'My(2px)')]").text
+                "//*[contains(@class, 'My(2px) C($c-base) Us(t) D(f) Ai(b) Maw(90%)')]").text
 
             if name_age:
                 split_name_age = name_age.split()
@@ -224,7 +244,7 @@ class WebBot:
         # we have so far..
         try:
 
-            for _ in range(6):
+            for _ in range(9):
                 # Sleep for 1 second or image url will not load
                 time.sleep(2)
 
