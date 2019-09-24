@@ -394,11 +394,13 @@ class AutoSwiper(WebBot):
             else:
                 self.swipe_right()
 
-            time.sleep(2 * self.sleep_multiplier)
+            # time.sleep(2 * self.sleep_multiplier)
 
             try:
-                continue_swiping_element = self.browser.find_element_by_xpath('//a[@href="' + "/app/recs" + '"]')
-                continue_swiping_element.click()
+                time.sleep(7 * self.sleep_multiplier)
+                continue_swiping_element = lambda : self.browser.find_element_by_xpath("//*[contains(@href, 'app/recs')")
+                continue_swiping_element().click()
+
             except (NoSuchElementException, WebDriverException):  # If didnt match with person then go on
                 pass
 
