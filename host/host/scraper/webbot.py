@@ -393,12 +393,8 @@ class AutoSwiper(WebBot):
             else:
                 self.swipe_right()
 
-            # time.sleep(2 * self.sleep_multiplier)
-
             try:
-                time.sleep(7 * self.sleep_multiplier)
-                # continue_swiping_element = lambda : self.browser.find_element_by_xpath("//*[contains(@href, 'app/recs')")
-
+                time.sleep(5 * self.sleep_multiplier)
                 continue_swiping_element = lambda: self.browser.find_element_by_xpath(
                     "//*[contains(text(), 'Keep Swiping')]")
                 continue_swiping_element().click()
