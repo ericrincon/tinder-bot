@@ -86,7 +86,6 @@ class WebBot:
         # image_urls = list(filter(lambda url: url != "", image_urls))
         # image_urls = list(filter(lambda url: url not in user_image_urls, image_urls))
 
-
         try:
             elem = self.browser.find_element_by_css_selector('body')
             elem.send_keys(Keys.ARROW_UP)
@@ -398,8 +397,13 @@ class AutoSwiper(WebBot):
 
             try:
                 time.sleep(7 * self.sleep_multiplier)
-                continue_swiping_element = lambda : self.browser.find_element_by_xpath("//*[contains(@href, 'app/recs')")
+                # continue_swiping_element = lambda : self.browser.find_element_by_xpath("//*[contains(@href, 'app/recs')")
+
+                continue_swiping_element = lambda: self.browser.find_element_by_xpath(
+                    "//*[contains(text(), 'Keep Swiping')]")
                 continue_swiping_element().click()
+
+
 
             except (NoSuchElementException, WebDriverException):  # If didnt match with person then go on
                 pass
