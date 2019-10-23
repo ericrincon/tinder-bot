@@ -19,8 +19,6 @@ from host.host.utils import images as utils_images
 
 from bs4 import BeautifulSoup
 
-from googletrans import Translator
-
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 file_handler = logging.FileHandler('errors.log')
