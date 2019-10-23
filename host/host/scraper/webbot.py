@@ -74,25 +74,13 @@ class WebBot:
     def get_bio(self):
 
         time.sleep(2)
-        # get_bio_text = lambda: self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
-        #
-        # # find a better way but this works for now...
-        # text_element = get_bio_text()
-        #
-        # soup = BeautifulSoup(self.browser.page_source)
-        # results = soup.find_all('div', attrs={"class": "profileCard__slider__img"})
-        #
-        # image_urls = list(map(lambda element: self.get_image_url(element), results))
-        # image_urls = list(filter(lambda url: url != "", image_urls))
-        # image_urls = list(filter(lambda url: url not in user_image_urls, image_urls))
+
 
         try:
             elem = self.browser.find_element_by_css_selector('body')
             elem.send_keys(Keys.ARROW_UP)
             time.sleep(2 * self.sleep_multiplier)
-            soup = BeautifulSoup(self.browser.page_source)
-            # print(soup)
-            # print(soup.select('div[class*="profileCard__bio"]'))
+
             profile_card = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
             profile_text = profile_card.find_element_by_css_selector('span')
 
@@ -394,7 +382,7 @@ class AutoSwiper(WebBot):
                 self.swipe_right()
 
             try:
-                time.sleep(5 * self.sleep_multiplier)
+                time.sleep(7 * self.sleep_multiplier)
                 continue_swiping_element = lambda: self.browser.find_element_by_xpath(
                     "//*[contains(text(), 'Keep Swiping')]")
                 continue_swiping_element().click()
