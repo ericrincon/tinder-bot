@@ -20,11 +20,11 @@ Session = sessionmaker(bind=engine)
 
 def create_db(drop=False):
     from database.db.models.user import TinderUser, Image
-    from database.db.models.labeling import LabelingSession, LabeledImage, \
-        Label
+    # from database.db.models.labeling import LabelingSession, LabeledImage, \
+    #     Label
 
     # Find a better way to do this...
-    tables = [TinderUser, Image, LabelingSession, LabeledImage, Label]
+    tables = [TinderUser, Image]#, LabelingSession, LabeledImage, Label]
 
     # Drop and create tables
     for table in tables:

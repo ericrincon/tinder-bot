@@ -63,7 +63,6 @@ class Image(Base):
     user_id = Column(TEXT, ForeignKey('tinder_user.id'))
     image_number = Column(INTEGER)
 
-
     def __init__(self, url, file_path, image_number):
         self.id = str(uuid.uuid4())
         self.url = url
