@@ -18,6 +18,7 @@ from selenium.common.exceptions import NoSuchElementException, WebDriverExceptio
 from host.host.utils import images as utils_images
 
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -356,7 +357,7 @@ class AutoSwiper(WebBot):
                 images = create_images(image_urls, self.images_file_path, image_name)
 
                 user = TinderUser(name=name, age=age, bio=bio_text,
-                                  images=images)
+                                  images=images, date_scraped=datetime.now())
                 utils_images.download_images(images)
 
                 session.add(user)

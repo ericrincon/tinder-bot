@@ -1,9 +1,10 @@
 import uuid
 
 from database.db import Base
-from sqlalchemy.dialects.postgresql import TEXT, INTEGER
+from sqlalchemy.dialects.postgresql import TEXT, INTEGER, TIMESTAMP
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 
 class TinderUser(Base):
@@ -20,10 +21,11 @@ class TinderUser(Base):
     instagram_photos = Column(TEXT, nullable=True)
     schools = Column(TEXT, nullable=True)
     jobs = Column(TEXT, nullable=True)
+    date_scraped = Column(TIMESTAMP, nullable=True)
 
     def __init__(self, name='', age=None, bio='', images=None, birth_date='',
                  instagram_username='', instagram_photos=None,
-                 schools=None, jobs=None):
+                 schools=None, jobs=None, date_scraped=None):
         """
 
         :param name: The name of the Tinder user. Usually just their first name
@@ -49,6 +51,14 @@ class TinderUser(Base):
         self.instagram_photos = instagram_photos
         self.schools = schools
         self.jobs = jobs
+        self.date_scraped = date_scraped
+
+    def get_info(self):
+        return {
+            "name": self.name,
+            "age": self.age,
+            "images": [image.get_info() for image in self.images]
+        }
 
 
 class Image(Base):
@@ -68,3 +78,8 @@ class Image(Base):
         self.url = url
         self.file_path = file_path
         self.image_number = image_number
+
+    def get_info(self):
+        return {
+            "file_path": self.file_path
+        }
