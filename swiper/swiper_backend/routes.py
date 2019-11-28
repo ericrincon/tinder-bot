@@ -103,12 +103,6 @@ def get_image():
     return send_from_directory(MEDIA_FOLDER, image.file_path, as_attachment=True)
 
 
-
-@app.route("image")
-def serve_image():
-    render_template("")
-
-
 @app.route("/api/profiles", methods=["GET"])
 def get_profiles():
     page = request.args.get("page", default=0)
