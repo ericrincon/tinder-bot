@@ -18,12 +18,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--browser", default="firefox")
     parser.add_argument("--debug", default="false", type=argparser_utils.boolean)
-    parser.add_argument("--sleep-multiplier", default=1, type=int)
+    parser.add_argument("--sleep-multiplier", default=1, type=argparser_utils.boolean)
+    parser.add_argument("--push-to-server", default=0, type=argparser_utils.boolean)
     args = parser.parse_args()
 
     while True:
-        auto_swiper = AutoSwiper(Config.email, Config.password,
-                                 sleep_multiplier=args.sleep_multiplier, browser=args.browser, debug=args.debug)
+        auto_swiper = AutoSwiper(
+            Config.email, Config.password,
+            push_to_server=args.push_to_server,
+            sleep_multiplier=args.sleep_multiplier, browser=args.browser, debug=args.debug)
         auto_swiper.start()
 
 
