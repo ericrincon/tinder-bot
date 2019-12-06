@@ -376,7 +376,7 @@ class AutoSwiper(WebBot):
                     sys.stdout.write(console_info)
                     sys.stdout.flush()
 
-            if not bio_checker.check(bio_text):
+            if bio_text is not None and not bio_checker.check(bio_text):
                 self.swipe_left()
             else:
                 self.swipe_right()
