@@ -61,9 +61,11 @@ def get_browser(browser, *args, **kwargs):
 
 
 class WebBot:
-    def __init__(self, email, password, sleep_multiplier: int = 1, browser='firefox', debug=False):
+    def __init__(self, email: str, password: str, push_to_server: bool = False,
+                 sleep_multiplier: int = 1, browser: str = 'firefox', debug: bool = False):
         self.email = email
         self.password = password
+        self.push_to_server = push_to_server
         self.browser = get_browser(browser)
         self.debug = debug
         self.sleep_multiplier = sleep_multiplier
@@ -73,7 +75,6 @@ class WebBot:
     def get_bio(self):
 
         time.sleep(2)
-
 
         try:
             elem = self.browser.find_element_by_css_selector('body')
@@ -326,54 +327,57 @@ class AutoSwiper(WebBot):
             console_info = ''
 
             time.sleep(2 * self.sleep_multiplier)
-
             bio_text = self.get_bio()
 
             if bio_text is None:
-                bio_text = 'No bio!'
-            name, age = self.get_name_age()
-            image_urls = self.get_all_image_urls()
+                bio_text = None
 
-            session = Session()
-            image_name = name
+            if self.push_to_server:
 
-            check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
+                name, age = self.get_name_age()
+                image_urls = self.get_all_image_urls()
 
-            bio_info = 'name: {} age: {} bio: {}\n'.format(name is not None, age is not None,
-                                                           bio_text is not None)
-            console_info += bio_info
-
-            while check:
-                if image_name and '_' in image_name:
-                    image_name, number = image_name.split('_')
-                    number = int(number) + 1
-                else:
-                    number = 0
-                image_name = '{}_{}'.format(image_name, number)
+                image_name = name
 
                 check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-            if image_urls is not None:
-                images = create_images(image_urls, self.images_file_path, image_name)
+                bio_info = 'name: {} age: {} bio: {}\n'.format(name is not None, age is not None,
+                                                               bio_text is not None)
+                console_info += bio_info
 
-                user = TinderUser(name=name, age=age, bio=bio_text,
-                                  images=images, date_scraped=datetime.now())
-                utils_images.download_images(images)
+                while check:
+                    if image_name and '_' in image_name:
+                        image_name, number = image_name.split('_')
+                        number = int(number) + 1
+                    else:
+                        number = 0
+                    image_name = '{}_{}'.format(image_name, number)
 
-                session.add(user)
-                session.commit()
-                session.close()
+                    check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-                self.profile_count += 1
-                profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
-                console_info += profile_add_info
+                if image_urls is not None:
+                    images = create_images(image_urls, self.images_file_path, image_name)
 
-                nb_scarped_text = '\n{} profiles scraped'.format(self.profile_count)
+                    user = {
+                        "name": name,
+                        "age": age,
+                        "bio": bio_text,
+                        "images": images,
+                        "date_scraped": datetime.now()
+                    }
 
-                console_info += nb_scarped_text
+                    utils_images.download_images(images)
 
-                sys.stdout.write(console_info)
-                sys.stdout.flush()
+                    self.profile_count += 1
+                    profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
+                    console_info += profile_add_info
+
+                    nb_scarped_text = '\n{} profiles scraped'.format(self.profile_count)
+
+                    console_info += nb_scarped_text
+
+                    sys.stdout.write(console_info)
+                    sys.stdout.flush()
 
             if not bio_checker.check(bio_text):
                 self.swipe_left()
