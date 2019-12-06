@@ -9,9 +9,6 @@ from selenium import webdriver
 
 from selenium.webdriver.common.keys import Keys
 
-from database.db.models.user import TinderUser, Image
-from database.db import Session
-
 from host.host.utils import files
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
