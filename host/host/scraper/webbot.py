@@ -3,6 +3,7 @@ import time
 import sys
 import robobrowser
 import logging
+import json
 
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
@@ -394,16 +395,37 @@ class AutoSwiper(WebBot):
 
 
 class BioCheck:
-    def __init__(self):
-        self.regex = [re.compile(r"not into hook ups|no hookups")]
+    def __init__(self, rules_file: str = "rules.json"):
+        with open(rules_file, "r") as f:
+            rules = json.load(f)
 
-    def check(self, bio):
+        left_keywords = rules.get("left")
+        right_keywords = rules.get("right")
+
+        if left_keywords is None:
+            raise ValueError("The key \"left\" must be defined in the json file!")
+
+        if right_keywords is None:
+            raise ValueError("The key \"right\" must be defined in the json file!")
+
+        regex_rules = dict()
+
+        for key, values in rules.items():
+            regex_rules[key] = re.compile("|".join(v for v in values))
+
+        self.regex_rules = regex_rules
+
+    def check(self, bio: str) -> bool:
+        """
+        Return False if any keywords appear in the "keywords"
+
+        :param bio: a str of the profile bio
+        """
 
         bio = bio.lower()
 
-        for exp in self.regex:
-            if exp.match(bio):
-                return False
+        if self.regex_rules["left"].match(bio):
+            return False
 
         return True
 
