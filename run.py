@@ -3,15 +3,7 @@ import argparse
 from host.host.scraper.webbot import AutoSwiper
 from config import Config
 
-from geopy.geocoders import Nominatim
-
 from host import argparser_utils
-
-
-def get_location(location_query):
-    geolocator = Nominatim()
-
-    return geolocator.geocode(location_query)
 
 
 def main():
@@ -20,6 +12,7 @@ def main():
     parser.add_argument("--debug", default="false", type=argparser_utils.boolean)
     parser.add_argument("--sleep-multiplier", default=1, type=argparser_utils.boolean)
     parser.add_argument("--push-to-server", default=0, type=argparser_utils.boolean)
+    parser.add_argument("--location", type=argparser_utils.arg_location, default="")
     args = parser.parse_args()
 
     while True:
@@ -27,7 +20,7 @@ def main():
             Config.email, Config.password,
             push_to_server=args.push_to_server,
             sleep_multiplier=args.sleep_multiplier, browser=args.browser, debug=args.debug)
-        auto_swiper.start()
+        auto_swiper.start(args.location)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,8 @@
-def boolean(arg):
+from typing import Dict
+from host.host.utils.location import get_location
+
+
+def boolean(arg: str) -> bool:
     arg = str(arg)
 
     arg = arg.lower()
@@ -7,3 +11,13 @@ def boolean(arg):
         return True
     else:
         return False
+
+
+def arg_location(arg: str) -> Dict[str, str]:
+    if arg  == "":
+        return get_location()
+    else:
+        info = arg.split(",")
+        keys = ["city", "state", "country"]
+
+        return dict(map(lambda x: (x[0], x[1].strip()), zip(keys, info)))
