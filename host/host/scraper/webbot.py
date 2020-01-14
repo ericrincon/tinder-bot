@@ -4,6 +4,7 @@ import sys
 import robobrowser
 import logging
 import json
+import geocoder
 
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
@@ -17,6 +18,8 @@ from host.host.utils import images as utils_images
 
 from bs4 import BeautifulSoup
 from datetime import datetime
+
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -56,6 +59,13 @@ def get_browser(browser, *args, **kwargs):
         return BROWSER_PROFILES[browser](*args, **kwargs)
     else:
         raise ValueError('Browser {} not defined!'.format(browser))
+
+
+
+def get_location() -> Dict:
+    location = geocoder.ip("me")
+
+    return {"state": location.state, "city": location.city, "Country": location.country}
 
 
 class WebBot:
@@ -321,6 +331,8 @@ class AutoSwiper(WebBot):
 
         bio_checker = BioCheck()
 
+        location = get_location()
+
         while True:
             console_info = ''
 
@@ -364,6 +376,7 @@ class AutoSwiper(WebBot):
                         "date_scraped": datetime.now()
                     }
 
+                    user.update(location)
                     utils_images.download_images(images)
 
                     self.profile_count += 1
