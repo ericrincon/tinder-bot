@@ -6,5 +6,4 @@ tinder/config.py
 *.txt
 pynder/
 *.log
-config.py
 tinder_data/
