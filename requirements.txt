@@ -3,10 +3,14 @@ bs4==0.0.1
 cached-property==1.5.1
 certifi==2019.6.16
 chardet==3.0.4
+Click==7.0
 contextlib2==0.5.5
 coverage==4.5.4
+decorator==4.4.1
 enum34==1.1.6
 funcsigs==1.0.2
+future==0.18.2
+geocoder==1.38.1
 geographiclib==1.49
 geopy==1.20.0
 idna==2.8
@@ -19,6 +23,8 @@ pbr==5.4.2
 psycopg2==2.8.3
 pynder==0.0.13
 python-dateutil==2.8.0
+python-dotenv==0.10.3
+ratelim==0.1.6
 requests==2.22.0
 robobrowser==0.5.3
 selenium==3.141.0
