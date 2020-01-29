@@ -18,7 +18,6 @@ from host.host.utils import images as utils_images
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 file_handler = logging.FileHandler('errors.log')
@@ -57,8 +56,6 @@ def get_browser(browser, *args, **kwargs):
         return BROWSER_PROFILES[browser](*args, **kwargs)
     else:
         raise ValueError('Browser {} not defined!'.format(browser))
-
-
 
 
 class WebBot:
@@ -268,22 +265,6 @@ class WebBot:
 
     def get_location_allow_button(self):
         return self.browser.find_element_by_xpath("//button[@aria-label='Allow']")
-
-
-def create_images(image_urls, images_file_path, tinder_user_name):
-    images = []
-
-    for i, image_url in enumerate(image_urls):
-        image_number = i + 1
-        file_path = get_tinder_user_image_filepath(images_file_path, tinder_user_name, image_number)
-        image = Image(url=image_url, file_path=file_path, image_number=image_number)
-        images.append(image)
-
-    return images
-
-
-def get_tinder_user_image_filepath(images_file_path, tinder_user_name, number):
-    return '{}/{}/{}_{}.jpg'.format(images_file_path, tinder_user_name, tinder_user_name, number)
 
 
 def get_tinder_user_image_dir(images_file_path, tinder_user_name):
