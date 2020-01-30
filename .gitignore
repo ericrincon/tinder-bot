@@ -7,3 +7,4 @@ tinder/config.py
 pynder/
 *.log
 tinder_data/
+.env
