@@ -17,7 +17,7 @@ def main():
 
     while True:
         auto_swiper = AutoSwiper(
-            Config.email, Config.password,
+            Config.EMAIL, Config.PASSWORD,
             push_to_server=args.push_to_server,
             sleep_multiplier=args.sleep_multiplier, browser=args.browser, debug=args.debug)
         auto_swiper.start(args.location)
