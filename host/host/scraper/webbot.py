@@ -4,19 +4,25 @@ import sys
 import robobrowser
 import logging
 import json
+import os
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
-
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.keys import Keys
 
 from host.host.utils import files
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
-
+from host.host.db_api import create_user
 from host.host.utils import images as utils_images
+from shutil import which
 
 from bs4 import BeautifulSoup
 from datetime import datetime
+
+FIREFOXPATH = which("firefox")
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -30,12 +36,19 @@ logger.addHandler(file_handler)
 logger.setLevel(logging.ERROR)
 
 
-def firefox(*args, **kwargs):
+def firefox(headless=False, *args, **kwargs):
+    from selenium.webdriver.firefox.options import Options
+
+    options = Options()
+    options.binary = FIREFOXPATH
+    if headless:
+        options.add_argument("-headless")
+
     firefox_profile = FirefoxProfile()
     firefox_profile.set_preference("geo.prompt.testing", True)
     firefox_profile.set_preference("geo.prompt.testing.allow", True)
 
-    return webdriver.Firefox(firefox_profile=firefox_profile)
+    return webdriver.Firefox(firefox_profile=firefox_profile, options=options)
 
 
 def chromium(*args, **kwargs):
@@ -45,9 +58,27 @@ def chromium(*args, **kwargs):
     return webdriver.Chrome(chrome_options=chrome_options)
 
 
+def get_headless_chrome(*args, **kwargs):
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--enable-geolocation")
+    # chrome_options.add_argument("--crash-dumps-dir=/tmp")
+    # chrome_options.add_argument("--remote-debugging-port=9222")
+    # chrome_options.binary_location = "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
+
+    driver = webdriver.Chrome(executable_path="/usr/local/bin/chromedriver", chrome_options=chrome_options)
+    # driver = webdriver.Chrome(chrome_options=chrome_options)
+    return driver
+
+
 BROWSER_PROFILES = {
-    'firefox': firefox,
-    'chromium': chromium
+    "firefox": firefox,
+    "chromium": chromium,
+    "headless_firefox": lambda: firefox(headless=True),
+    "headless_chrome": get_headless_chrome
 }
 
 
@@ -60,7 +91,7 @@ def get_browser(browser, *args, **kwargs):
 
 class WebBot:
     def __init__(self, email: str, password: str, push_to_server: bool = False,
-                 sleep_multiplier: int = 1, browser: str = 'firefox', debug: bool = False):
+                 sleep_multiplier: int = 1, browser: str = "firefox", debug: bool = False):
         self.email = email
         self.password = password
         self.push_to_server = push_to_server
@@ -101,6 +132,9 @@ class WebBot:
         time.sleep(5 * self.sleep_multiplier)
 
         try:
+            # more_options_button = self.browser.find_element_by_partial_link_text("More Options")
+            # more_options_button.click()
+            time.sleep(2)
             login_button = self.browser.find_element_by_xpath('//button[@aria-label="Log in with Facebook"]')
             login_button.click()
             time.sleep(2 * self.sleep_multiplier)
@@ -338,7 +372,7 @@ class AutoSwiper(WebBot):
                     check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
                 if image_urls is not None:
-                    images = create_images(image_urls, self.images_file_path, image_name)
+                    images = [utils_images.get_image(image_url) for image_url in image_urls]
 
                     user = {
                         "name": name,
@@ -349,7 +383,8 @@ class AutoSwiper(WebBot):
                     }
 
                     user.update(location)
-                    utils_images.download_images(images)
+
+                    created = create_user(user)
 
                     self.profile_count += 1
                     profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))

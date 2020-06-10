@@ -1,7 +1,8 @@
+
 import argparse
 
 from host.host.scraper.webbot import AutoSwiper
-from config import Config
+from host.host.config import Config
 
 from host import argparser_utils
 

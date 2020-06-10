@@ -1,0 +1,18 @@
+version: '3'
+services:
+  tinder_bot:
+    command: python3 run.py --browser headless_firefox
+    build: .
+    ports:
+      - "8000:8000"
+    networks:
+      - tinder_bot_test
+    volumes:
+      - ./host:/home/host
+      - /dev/shm:/dev/shm
+      - ./rules.json:/home/rules.json
+    env_file:
+      - dev.env
+networks:
+  tinder_bot_test:
+    external: true
