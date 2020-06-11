@@ -14,10 +14,12 @@ def boolean(arg: str) -> bool:
 
 
 def arg_location(arg: str) -> Dict[str, str]:
-    if arg  == "":
+    if arg == "":
         return get_location()
     else:
         info = arg.split(",")
         keys = ["city", "state", "country"]
 
-        return dict(map(lambda x: (x[0], x[1].strip()), zip(keys, info)))
+        location = dict(map(lambda x: (x[0], x[1].strip()), zip(keys, info)))
+
+        return location

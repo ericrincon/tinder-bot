@@ -101,7 +101,7 @@ class WebBot:
 
         self.browser.get('https://tinder.com/app/login')
 
-    def get_bio(self):
+    def get_bio(self) -> str:
 
         time.sleep(2)
 
@@ -110,23 +110,36 @@ class WebBot:
             elem.send_keys(Keys.ARROW_UP)
             time.sleep(2 * self.sleep_multiplier)
 
-            profile_card = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__bio')]")
-            profile_text = profile_card.find_element_by_css_selector('span')
+            profile_card = self.browser.find_element_by_xpath("//div[contains(@class, 'BreakWord')]")
 
-            return profile_text.text
+            # idk why tinder did this but it's dumb text is broken up into spans
+            outer_div = profile_card.find_element_by_css_selector("div")
+            text_elements = outer_div.find_elements_by_css_selector("span")
+
+            profile_text = ""
+
+            for text_element in text_elements:
+                if text_element.text is not None:
+                    profile_text += text_element.text
+
+            return profile_text
 
         except Exception as e:
             logger.error("Bio not found: {}".format(e))
 
             return None
 
+    def _get_content_element(self):
+        return self.browser.find_element_by_id("content")
+
+    def _get_button_by_aria_label(self, aria_label: str):
+        return self.browser.find_element_by_xpath("//button[@aria-label='{}']".format(aria_label))
+
     def swipe_left(self):
-        get_body_element = lambda: self.browser.find_element_by_css_selector('body')
-        get_body_element().send_keys(Keys.ARROW_LEFT)
+        self._get_button_by_aria_label("Nope").click()
 
     def swipe_right(self):
-        get_body_element = lambda: self.browser.find_element_by_css_selector('body')
-        get_body_element().send_keys(Keys.ARROW_RIGHT)
+        self._get_button_by_aria_label("Like").click()
 
     def login_facebook(self):
         time.sleep(5 * self.sleep_multiplier)
@@ -300,6 +313,17 @@ class WebBot:
     def get_location_allow_button(self):
         return self.browser.find_element_by_xpath("//button[@aria-label='Allow']")
 
+    def check_for_match_popup(self):
+        try:
+            time.sleep(7 * self.sleep_multiplier)
+            self.browser.find_element_by_xpath("//a[@aria-current='page']").click()
+
+            return True
+        except (NoSuchElementException, WebDriverException) as e:  # If didnt match with person then go on
+            print(e)
+
+            return False
+
 
 def get_tinder_user_image_dir(images_file_path, tinder_user_name):
     return '{}/{}'.format(images_file_path, tinder_user_name)
@@ -340,8 +364,6 @@ class AutoSwiper(WebBot):
         bio_checker = BioCheck()
 
         while True:
-            console_info = ''
-
             time.sleep(2 * self.sleep_multiplier)
             bio_text = self.get_bio()
 
@@ -349,7 +371,6 @@ class AutoSwiper(WebBot):
                 bio_text = None
 
             if self.push_to_server:
-
                 name, age = self.get_name_age()
                 image_urls = self.get_all_image_urls()
 
@@ -357,61 +378,43 @@ class AutoSwiper(WebBot):
 
                 check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
 
-                bio_info = 'name: {} age: {} bio: {}\n'.format(name is not None, age is not None,
-                                                               bio_text is not None)
-                console_info += bio_info
-
-                while check:
-                    if image_name and '_' in image_name:
-                        image_name, number = image_name.split('_')
-                        number = int(number) + 1
-                    else:
-                        number = 0
-                    image_name = '{}_{}'.format(image_name, number)
-
-                    check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
-
                 if image_urls is not None:
+                    # literal images that need to be pushed to AWS
                     images = [utils_images.get_image(image_url) for image_url in image_urls]
+                    image_objects = []
+
+                    for i, (image, image_url) in enumerate(zip(images, image_urls)):
+                        file_path = "fakecall"
+
+                        image_objects.append({
+                            "url": image_url,
+                            "file_path": file_path,
+                            "image_number": i
+                        })
 
                     user = {
                         "name": name,
                         "age": age,
                         "bio": bio_text,
-                        "images": images,
-                        "date_scraped": datetime.now()
+                        "images": image_objects
                     }
 
                     user.update(location)
 
                     created = create_user(user)
+                    if created:
+                        self.profile_count += 1
 
-                    self.profile_count += 1
-                    profile_add_info = '\nAdded {} of age {} with {} images\n'.format(name, age, len(images))
-                    console_info += profile_add_info
-
-                    nb_scarped_text = '\n{} profiles scraped'.format(self.profile_count)
-
-                    console_info += nb_scarped_text
-
-                    sys.stdout.write(console_info)
-                    sys.stdout.flush()
+                        log = 'Total Scraped: {} | Scraped {} with info: age: {} - ' \
+                          'has bio: {} - Image count: {}'.format(self.profile_count, name, age, bio_text is not None,
+                                                                 len(image_objects))
+                        print(log)
 
             if bio_text is not None and not bio_checker.check(bio_text):
                 self.swipe_left()
             else:
                 self.swipe_right()
-
-            try:
-                time.sleep(7 * self.sleep_multiplier)
-                continue_swiping_element = lambda: self.browser.find_element_by_xpath(
-                    "//*[contains(text(), 'Keep Swiping')]")
-                continue_swiping_element().click()
-
-
-
-            except (NoSuchElementException, WebDriverException):  # If didnt match with person then go on
-                pass
+            self.check_for_match_popup()
 
 
 class BioCheck:

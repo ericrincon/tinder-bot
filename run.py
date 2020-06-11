@@ -1,4 +1,3 @@
-
 import argparse
 
 from host.host.scraper.webbot import AutoSwiper
@@ -18,7 +17,8 @@ def main():
 
     while True:
         auto_swiper = AutoSwiper(
-            Config.EMAIL, Config.PASSWORD,
+            email=Config.EMAIL,
+            password=Config.PASSWORD,
             push_to_server=args.push_to_server,
             sleep_multiplier=args.sleep_multiplier, browser=args.browser, debug=args.debug)
         auto_swiper.start(args.location)
