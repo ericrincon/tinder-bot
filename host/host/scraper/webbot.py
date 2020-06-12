@@ -4,7 +4,8 @@ import sys
 import robobrowser
 import logging
 import json
-import os
+import uuid
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
@@ -13,14 +14,16 @@ from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.webdriver import FirefoxBinary
 
 from host.host.utils import files
 from host.host.db_api import create_user
 from host.host.utils import images as utils_images
+from host.host.utils.aws import s3_put_png
+
 from shutil import which
 
 from bs4 import BeautifulSoup
-from datetime import datetime
 
 FIREFOXPATH = which("firefox")
 
@@ -41,14 +44,18 @@ def firefox(headless=False, *args, **kwargs):
 
     options = Options()
     options.binary = FIREFOXPATH
+
     if headless:
         options.add_argument("-headless")
 
     firefox_profile = FirefoxProfile()
+    firefox_profile.set_preference("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:77.0) Gecko/20100101 Firefox/77.0")
+
     firefox_profile.set_preference("geo.prompt.testing", True)
     firefox_profile.set_preference("geo.prompt.testing.allow", True)
+    binary = FirefoxBinary()
 
-    return webdriver.Firefox(firefox_profile=firefox_profile, options=options)
+    return webdriver.Firefox(firefox_profile=firefox_profile, options=options, firefox_binary=binary)
 
 
 def chromium(*args, **kwargs):
@@ -136,10 +143,12 @@ class WebBot:
         return self.browser.find_element_by_xpath("//button[@aria-label='{}']".format(aria_label))
 
     def swipe_left(self):
-        self._get_button_by_aria_label("Nope").click()
+        e = self._get_button_by_aria_label("Nope")
+        self.browser.execute_script("arguments[0].click();", e)
 
     def swipe_right(self):
-        self._get_button_by_aria_label("Like").click()
+        e = self._get_button_by_aria_label("Like")
+        self.browser.execute_script("arguments[0].click();", e)
 
     def login_facebook(self):
         time.sleep(5 * self.sleep_multiplier)
@@ -234,13 +243,13 @@ class WebBot:
         """
         return self.browser.find_element_by_xpath("//*[contains(@class, 'react-swipeable-view-container')")
 
-    def get_image_url(self, element):
+    def get_image_url(self, style: str):
         """
 
         :param element:
         :return:
         """
-        style = element.get("style")
+        # style = element.get("style")
         url = ""
 
         if style is not None and style != "":
@@ -274,27 +283,29 @@ class WebBot:
 
         # If there is a no such element exception at an iteration of the for loop catch and return what
         # we have so far..
+
         try:
-
+            self.browser.switch_to.active_element.send_keys(Keys.ARROW_UP)
             for _ in range(9):
-                # Sleep for 1 second or image url will not load
-                time.sleep(2)
+                time.sleep(1)
+                container = self.browser.find_element_by_class_name("react-swipeable-view-container")
+                image_element = container.find_element_by_xpath("//div[@aria-hidden='false']")
+                image_element = image_element.find_element_by_xpath("//div[@aria-label='Profile slider']")
+                style = image_element.get_attribute("style")
 
-                # find a better way but this works for now...
-                get_picture_elements().send_keys(Keys.SPACE)
-                soup = BeautifulSoup(self.browser.page_source)
-                results = soup.find_all('div', attrs={"class": "profileCard__slider__img"})
+                image_url = self.get_image_url(style)
 
-                image_urls = list(map(lambda element: self.get_image_url(element), results))
-                image_urls = list(filter(lambda url: url != "", image_urls))
-                image_urls = list(filter(lambda url: url not in user_image_urls, image_urls))
-
-                user_image_urls.extend(image_urls)
+                if image_url not in user_image_urls and image_url != "":
+                    user_image_urls.append(image_url)
+                self.browser.switch_to.active_element.send_keys(Keys.SPACE)
 
         except NoSuchElementException as e:
+            self.browser.switch_to.active_element.send_keys(Keys.ARROW_DOWN)
+
             logger.error("An image url could not be found!\n{}".format(e))
 
             return None
+        self.browser.switch_to.active_element.send_keys(Keys.ARROW_DOWN)
 
         return user_image_urls
 
@@ -320,7 +331,8 @@ class WebBot:
 
             return True
         except (NoSuchElementException, WebDriverException) as e:  # If didnt match with person then go on
-            print(e)
+            if isinstance(e, WebDriverException):
+                logging.error(e)
 
             return False
 
@@ -374,22 +386,20 @@ class AutoSwiper(WebBot):
                 name, age = self.get_name_age()
                 image_urls = self.get_all_image_urls()
 
-                image_name = name
-
-                check = files.make_check_dir(get_tinder_user_image_dir(self.images_file_path, image_name))
-
                 if image_urls is not None:
-                    # literal images that need to be pushed to AWS
-                    images = [utils_images.get_image(image_url) for image_url in image_urls]
                     image_objects = []
 
-                    for i, (image, image_url) in enumerate(zip(images, image_urls)):
-                        file_path = "fakecall"
+                    for i, image_url in enumerate(image_urls):
+                        image = utils_images.get_image(image_url)
+                        file_name = str(uuid.uuid4())
+                        key = s3_put_png(image, file_name)
 
                         image_objects.append({
+                            "id": file_name,
                             "url": image_url,
-                            "file_path": file_path,
-                            "image_number": i
+                            "s3_name": key,
+                            "image_number": i,
+                            "legacy": False
                         })
 
                     user = {
@@ -406,10 +416,11 @@ class AutoSwiper(WebBot):
                         self.profile_count += 1
 
                         log = 'Total Scraped: {} | Scraped {} with info: age: {} - ' \
-                          'has bio: {} - Image count: {}'.format(self.profile_count, name, age, bio_text is not None,
-                                                                 len(image_objects))
+                              'has bio: {} - Image count: {}'.format(self.profile_count, name, age,
+                                                                     bio_text is not None,
+                                                                     len(image_objects))
                         print(log)
-
+            time.sleep(2)
             if bio_text is not None and not bio_checker.check(bio_text):
                 self.swipe_left()
             else:
