@@ -1,5 +1,9 @@
 import urllib.request
+import numpy as np
+import requests
+import io
 
+from PIL import Image
 from urllib.error import URLError
 
 
@@ -16,3 +20,11 @@ def download_image(url, file_name):
         print("Retrieving URL {} failed".format(url))
         print("Exception: {}".format(e))
         print("--------------------")
+
+
+def get_image(url: str) -> np.ndarray:
+    data = requests.get(url).content
+    img = Image.open(io.BytesIO(data))
+    img = np.asarray(img)
+
+    return img
