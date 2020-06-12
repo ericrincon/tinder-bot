@@ -1,7 +1,7 @@
 version: '3'
 services:
   tinder_bot:
-    command: python3 run.py --browser headless_firefox
+    command: python3 run.py --browser headless_firefox --push-to-server 1
     build: .
     ports:
       - "8000:8000"
@@ -11,6 +11,7 @@ services:
       - ./host:/home/host
       - /dev/shm:/dev/shm
       - ./rules.json:/home/rules.json
+      - ./run.py:/home/run.py
     env_file:
       - dev.env
 networks:
