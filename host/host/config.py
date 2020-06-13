@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
-load_dotenv("/Users/ericrincon/projects/tinder-bot/dev.env")
+load_dotenv("/Users/ericrincon/projects/tinder-bot/prod.env")
 
 
 class Config:
