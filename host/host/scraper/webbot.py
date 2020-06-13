@@ -6,9 +6,6 @@ import logging
 import json
 import uuid
 
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
@@ -16,14 +13,13 @@ from selenium.common.exceptions import NoSuchElementException, WebDriverExceptio
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.webdriver import FirefoxBinary
 
-from host.host.utils import files
 from host.host.db_api import create_user
 from host.host.utils import images as utils_images
 from host.host.utils.aws import s3_put_png
 
 from shutil import which
 
-from bs4 import BeautifulSoup
+from typing import Dict
 
 FIREFOXPATH = which("firefox")
 
@@ -49,7 +45,8 @@ def firefox(headless=False, *args, **kwargs):
         options.add_argument("-headless")
 
     firefox_profile = FirefoxProfile()
-    firefox_profile.set_preference("general.useragent.override", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:77.0) Gecko/20100101 Firefox/77.0")
+    firefox_profile.set_preference("general.useragent.override",
+                                   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:77.0) Gecko/20100101 Firefox/77.0")
 
     firefox_profile.set_preference("geo.prompt.testing", True)
     firefox_profile.set_preference("geo.prompt.testing.allow", True)
@@ -345,10 +342,7 @@ class AutoSwiper(WebBot):
     def __init__(self, *args, **kwargs):
         super(AutoSwiper, self).__init__(*args, **kwargs)
 
-        self.images_file_path = '/Users/ericrincon/tinder_data/images'
         self.profile_count = 0
-
-        files.make_check_dir(self.images_file_path)
 
     def restart_check(self):
         if self.debug:
@@ -361,7 +355,7 @@ class AutoSwiper(WebBot):
 
         self.browser.close()
 
-    def start(self, location):
+    def start(self, location: Dict):
         self.login_facebook()
 
         time.sleep(10)
