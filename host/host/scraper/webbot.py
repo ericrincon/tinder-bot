@@ -7,6 +7,11 @@ import json
 import uuid
 
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
+
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
@@ -66,14 +71,14 @@ def get_headless_chrome(*args, **kwargs):
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--enable-geolocation")
     # chrome_options.add_argument("--crash-dumps-dir=/tmp")
     # chrome_options.add_argument("--remote-debugging-port=9222")
     # chrome_options.binary_location = "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
 
-    driver = webdriver.Chrome(executable_path="/usr/local/bin/chromedriver", chrome_options=chrome_options)
+    driver = webdriver.Chrome(
+        chrome_options=chrome_options)
     # driver = webdriver.Chrome(chrome_options=chrome_options)
     return driver
 
@@ -319,7 +324,16 @@ class WebBot:
         return self.browser.find_elements_by_xpath("//button[@aria-label='Not interested']")
 
     def get_location_allow_button(self):
-        return self.browser.find_element_by_xpath("//button[@aria-label='Allow']")
+        try:
+            return WebDriverWait(self.browser, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//button[@aria-label='Allow']"))
+            )
+        except TimeoutException as time_out_e:
+            logging.error(time_out_e)
+        except WebDriverException as e:
+            logging.error(e)
+
+        # return self.browser.find_element_by_xpath("//button[@aria-label='Allow']")
 
     def check_for_match_popup(self):
         try:
