@@ -332,6 +332,9 @@ class WebBot:
             logging.error(time_out_e)
         except WebDriverException as e:
             logging.error(e)
+        except Exception as e:
+            logging.error(e)
+
 
         # return self.browser.find_element_by_xpath("//button[@aria-label='Allow']")
 
