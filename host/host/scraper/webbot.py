@@ -6,27 +6,19 @@ import logging
 import json
 import uuid
 
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
-
-from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
-from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.firefox.webdriver import FirefoxBinary
 
 from host.host.db_api import create_user
+from host.host.scraper.browser import get_browser
 from host.host.utils import images as utils_images
 from host.host.utils.aws import s3_put_png
 
-from shutil import which
-
 from typing import Dict
-
-FIREFOXPATH = which("firefox")
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -38,64 +30,6 @@ file_handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 logger.addHandler(file_handler)
 logger.setLevel(logging.ERROR)
-
-
-def firefox(headless=False, *args, **kwargs):
-    from selenium.webdriver.firefox.options import Options
-
-    options = Options()
-    options.binary = FIREFOXPATH
-
-    if headless:
-        options.add_argument("-headless")
-
-    firefox_profile = FirefoxProfile()
-    firefox_profile.set_preference("general.useragent.override",
-                                   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:77.0) Gecko/20100101 Firefox/77.0")
-
-    firefox_profile.set_preference("geo.prompt.testing", True)
-    firefox_profile.set_preference("geo.prompt.testing.allow", True)
-    binary = FirefoxBinary()
-
-    return webdriver.Firefox(firefox_profile=firefox_profile, options=options, firefox_binary=binary)
-
-
-def chromium(*args, **kwargs):
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--disable-notifications')
-
-    return webdriver.Chrome(chrome_options=chrome_options)
-
-
-def get_headless_chrome(*args, **kwargs):
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--enable-geolocation")
-    # chrome_options.add_argument("--crash-dumps-dir=/tmp")
-    # chrome_options.add_argument("--remote-debugging-port=9222")
-    # chrome_options.binary_location = "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
-
-    driver = webdriver.Chrome(
-        chrome_options=chrome_options)
-    # driver = webdriver.Chrome(chrome_options=chrome_options)
-    return driver
-
-
-BROWSER_PROFILES = {
-    "firefox": firefox,
-    "chromium": chromium,
-    "headless_firefox": lambda: firefox(headless=True),
-    "headless_chrome": get_headless_chrome
-}
-
-
-def get_browser(browser, *args, **kwargs):
-    if browser in BROWSER_PROFILES:
-        return BROWSER_PROFILES[browser](*args, **kwargs)
-    else:
-        raise ValueError('Browser {} not defined!'.format(browser))
 
 
 class WebBot:
@@ -330,11 +264,13 @@ class WebBot:
             )
         except TimeoutException as time_out_e:
             logging.error(time_out_e)
+        except NoSuchElementException as e:
+            logging.error("NoSuchElementException!")
+            logging.error(e)
         except WebDriverException as e:
             logging.error(e)
         except Exception as e:
             logging.error(e)
-
 
         # return self.browser.find_element_by_xpath("//button[@aria-label='Allow']")
 
