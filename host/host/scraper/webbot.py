@@ -252,14 +252,28 @@ class WebBot:
         return self.browser.find_element_by_xpath("//button[@aria-label='Next']")
 
     def get_enable_notifications_not_interested(self):
-        return self.browser.find_element_by_xpath("//button[@aria-label='Not interested']")
+        # return self.browser.find_element_by_xpath("//button[@aria-label='Not interested']")
+
+        try:
+            return WebDriverWait(self.browser, 25).until(
+                EC.presence_of_element_located((By.XPATH, "//button[@aria-label='Not interested']"))
+            )
+        except TimeoutException as time_out_e:
+            logging.error(time_out_e)
+        except NoSuchElementException as e:
+            logging.error("NoSuchElementException!")
+            logging.error(e)
+        except WebDriverException as e:
+            logging.error(e)
+        except Exception as e:
+            logging.error(e)
 
     def get_matches_element(self):
         return self.browser.find_elements_by_xpath("//button[@aria-label='Not interested']")
 
     def get_location_allow_button(self):
         try:
-            return WebDriverWait(self.browser, 10).until(
+            return WebDriverWait(self.browser, 25).until(
                 EC.presence_of_element_located((By.XPATH, "//button[@aria-label='Allow']"))
             )
         except TimeoutException as time_out_e:
@@ -311,12 +325,9 @@ class AutoSwiper(WebBot):
     def start(self, location: Dict):
         self.login_facebook()
 
-        time.sleep(10)
-
         location_button = self.get_location_allow_button()
         location_button.click()
 
-        time.sleep(10)
         not_interested_button = self.get_enable_notifications_not_interested()
         not_interested_button.click()
 
@@ -358,15 +369,16 @@ class AutoSwiper(WebBot):
 
                     user.update(location)
 
-                    created = create_user(user)
-                    if created:
-                        self.profile_count += 1
+                    if name is not None and len(image_objects) > 0:
+                        created = create_user(user)
+                        if created:
+                            self.profile_count += 1
 
-                        log = 'Total Scraped: {} | Scraped {} with info: age: {} - ' \
-                              'has bio: {} - Image count: {}'.format(self.profile_count, name, age,
-                                                                     bio_text is not None,
-                                                                     len(image_objects))
-                        print(log)
+                            log = 'Total Scraped: {} | Scraped {} with info: age: {} - ' \
+                                  'has bio: {} - Image count: {}'.format(self.profile_count, name, age,
+                                                                         bio_text is not None,
+                                                                         len(image_objects))
+                            print(log)
             time.sleep(2)
             if bio_text is not None and not bio_checker.check(bio_text):
                 self.swipe_left()
