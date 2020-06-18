@@ -204,17 +204,6 @@ class WebBot:
         """
         time.sleep(1 * self.sleep_multiplier)
 
-        try:
-
-            # soup = BeautifulSoup(self.browser.page_source)
-            # results = soup.find_all('div', attrs={"class": "home-summary-row"})
-            get_picture_elements = lambda: self.browser.find_element_by_xpath(
-                "//*[contains(@class, 'profileCard__slider')]")
-        except NoSuchElementException as e:
-            logger.error("Failed to get image urls: {}".format(e))
-
-            return []
-
         user_image_urls = []
 
         # If there is a no such element exception at an iteration of the for loop catch and return what
@@ -288,15 +277,31 @@ class WebBot:
 
         # return self.browser.find_element_by_xpath("//button[@aria-label='Allow']")
 
-    def check_for_match_popup(self):
+    def check_for_match_popup(self) -> bool:
         try:
-            time.sleep(7 * self.sleep_multiplier)
-            self.browser.find_element_by_xpath("//a[@aria-current='page']").click()
+            element = WebDriverWait(self.browser, 5).until(
+                EC.presence_of_element_located((By.XPATH, "//a[@aria-current='page']"))
+            )
+
+            element.click()
 
             return True
-        except (NoSuchElementException, WebDriverException) as e:  # If didnt match with person then go on
-            if isinstance(e, WebDriverException):
-                logging.error(e)
+
+        except TimeoutException as time_out_e:
+            logging.error(time_out_e)
+        except NoSuchElementException as e:
+            logging.error("NoSuchElementException!")
+            logging.error(e)
+
+            return False
+        except WebDriverException as e:
+            logging.error(e)
+
+            return False
+        except Exception as e:
+            logging.error(e)
+
+            # time.sleep(7 * self.sleep_multiplier)
 
             return False
 
