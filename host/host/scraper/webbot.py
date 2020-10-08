@@ -90,6 +90,8 @@ class WebBot:
         time.sleep(5 * self.sleep_multiplier)
 
         try:
+            login_button = self.browser.find_element_by_xpath("//button[contains(@class, 'button Lts')]")
+            login_button.click()
             # more_options_button = self.browser.find_element_by_partial_link_text("More Options")
             # more_options_button.click()
             time.sleep(2)
@@ -111,6 +113,23 @@ class WebBot:
         login_button.click()
 
         self.browser.switch_to_window(self.browser.window_handles[0])
+
+    def login_phone(self):
+        time.sleep(5 * self.sleep_multiplier)
+
+        try:
+            # more_options_button = self.browser.find_element_by_partial_link_text("More Options")
+            # more_options_button.click()
+            time.sleep(2)
+            login_button = self.browser.find_element_by_xpath('//button[@aria-label="Log in with phone number"]')
+            login_button.click()
+            time.sleep(2 * self.sleep_multiplier)
+            self.browser.switch_to_window(self.browser.window_handles[-1])
+
+        except Exception as e:
+            logger.error("Could not log : {}".format(e))
+
+        input("Press Enter to continue...")
 
     def get_share_button(self):
         """
@@ -212,8 +231,8 @@ class WebBot:
         try:
             self.browser.switch_to.active_element.send_keys(Keys.ARROW_UP)
             for _ in range(9):
-                time.sleep(1)
-                container = self.browser.find_element_by_class_name("react-swipeable-view-container")
+                time.sleep(2)
+                container = self.browser.find_element_by_xpath("//*[contains(@class, 'profileCard__card')]")
                 image_element = container.find_element_by_xpath("//div[@aria-hidden='false']")
                 image_element = image_element.find_element_by_xpath("//div[@aria-label='Profile slider']")
                 style = image_element.get_attribute("style")
@@ -279,7 +298,7 @@ class WebBot:
 
     def check_for_match_popup(self) -> bool:
         try:
-            element = WebDriverWait(self.browser, 5).until(
+            element = WebDriverWait(self.browser, 3).until(
                 EC.presence_of_element_located((By.XPATH, "//a[@aria-current='page']"))
             )
 
@@ -327,7 +346,7 @@ class AutoSwiper(WebBot):
 
         self.browser.close()
 
-    def start(self, location: Dict):
+    def start(self, location: Dict, target_gender: str):
         self.login_facebook()
 
         location_button = self.get_location_allow_button()
@@ -339,7 +358,7 @@ class AutoSwiper(WebBot):
         bio_checker = BioCheck()
 
         while True:
-            time.sleep(2 * self.sleep_multiplier)
+            time.sleep(2 )
             bio_text = self.get_bio()
 
             if bio_text is None:
@@ -369,7 +388,8 @@ class AutoSwiper(WebBot):
                         "name": name,
                         "age": age,
                         "bio": bio_text,
-                        "images": image_objects
+                        "images": image_objects,
+                        "gender": target_gender
                     }
 
                     user.update(location)
